@@ -1,0 +1,222 @@
+# unity 高级语法
+
+## delegate（委托）
+
+```
+//声明一个委托 XXXX
+public delegate void XXXX();
+```
+
+```
+//定义 XXXX 的一个变量
+public XXXX delegateObj1;
+
+//定义一个真实的函数
+public void func1(){}
+
+//将真实函数赋值给变量
+delegateObj1 = func1;
+```
+
+```
+//调用委托对象等同于调用它代表的函数
+delegateObj1();//等价于func1();
+```
+
+## event
+
+```
+//声明一个：<事件委托>的变量
+public event ImDelegate  AAA;
+```
+
+```
+//给这个变量添加N个函数
+AAA += func1; //添加
+AAA += func2; //添加
+```
+
+```
+执行这个成员变量
+AAA();//此时：函数 func1 和 func2 都会调用
+```
+
+> 挺神奇的一个东西...... ，一个接口的实现的N个函数，可以叠加，统一触发
+
+## Action/Func
+
+Action:用于无返还值的委托类型
+
+Func\<T\>:用于有返回值的委托类型，最后一个类型参数 T 代表返还值类型。
+
+不用再单独去申请一个委托了，直接在定义成员变量时，可以直接使用。有点泛型函数的意思。
+
+```
+//int 返回值，string double 为参数
+public event Func<string,double,int> myObj;
+```
+
+感觉是挺简单，一行代码，即有委托的定义，也有变量的定义，同时把 event也加进去了
+
+## Lambda
+
+委托的变量名 = \(参数类型 参数变量\) =\> {具体函数内容}
+
+> 感觉它这个有点像匿名函数
+
+## sleep
+
+Thread.Sleep\(1000\);//阻塞线程
+
+Task.Delay\(1000\);//异步非阻塞
+
+## 协程
+
+使用协程的前置条件：
+
+1. 调用者必须继承：monobehaviour
+2. 调用类必须使用函数 startcoroutine 触发协程函数
+3. 协程函数必须返回 IEnumerator 类型
+4. 最终靠 yield 来实现异步
+5. 不能在代码中直接使用 try\-catch
+6. 不能有返回值
+
+从中看一下缺点：
+
+1. 不能 try catch
+2. 必须继承 monobehaviour
+3. 没有返回值，就得无限回调了
+4. 并不是真正的异步，而是伪异步
+
+大体执行过程：
+
+monobehaviour:startcoroutine\-\>IEnumerator\-\>自己的函数\-\>yeild控制流程\<\-monobehaviour调度
+
+#### 核心1：IEnumerable\(MoveNext\)
+
+IEnumerable:迭代器，foreach 可以直接遍历它
+
+IEnumerator:迭代器,或者叫对象容器也行。它才是核心。上面更倾向是一个接口，而这个更倾向于管理元素。它把一个函数拆分成\(yeild\)若干个小函数，放到若干的元素里，遍历执行。\(MoveNext\)
+
+```
+public interface IEnumerator
+{
+     bool MoveNext();//下一段代码(函数)的入口
+     void Reset();
+     Object Current{get;}//上一次执行返回的结果
+}
+```
+
+IEnumerator是个迭代器，不停的调用 MoveNext 函数，再把用户自己的函数进行分段拆分，如 MoveNext 函数内，用一个select ，把代码拆成若干段，执行每段后，返回执行的位置。下次再执行 MoveNext 函数，就直接跳到下一个段的函数。
+
+所以，严格来说它并不是纯异步，依然还是在主线程上执行\(每次update之后lateupdate之前\)。
+
+### 核心2 yield
+
+如何自己去实现 IEnumerator 类，重复代码太多，且有危险。如果某个函数，想在某个点做拆分，直接在前面加个 yield 就行了。
+
+> yield 是C\# 的。 monobehaviour 这个鸟东西是 UNITY的
+
+|代码                                   |描述                                                                                                                     ||
+|---------------------------------------|-------------------------------------------------------------------------------------------------------------------------||
+|yield return null                      |下一帧再执行后续代码                                                                                                     ||
+|yield break                            |直接结束该协程的后续操作                                                                                                 ||
+|yield return asyncOperation            |等异步操作结束后再执行后续代码                                                                                           ||
+|yield return StartCoroution            |等待某个协程执行完毕后再执行后续代码                                                                                     ||
+|yield return WWW\(\)                   |等待WWW操作完成后再执行后续代码                                                                                          ||
+|yield return new WaitForEndOfFrame\(\) |等待帧结束,等待直到所有的摄像机和GUI被渲染完成后，在该帧显示在屏幕之前执行                                               ||
+|yield return new WaitForSeconds\(0.3f\)|等待0.3秒，一段指定的时间延迟之后继续执行，在所有的Update函数完成调用的那一帧之后（这里的时间会受到Time.timeScale的影响）||
+|                                       |                                                                                                                         ||
+
+> yield return XXXX
+
+通过 上面的表达式，也就是关键字：yield return any\-Object，实现了异步
+
+any\-Object：可以是任意值，如标量的整形、字符串等。也可以是个对象，还可以是个执行函数
+
+这里重点说一个：
+
+> yield return webRequest.SendWebRequest\(\);
+
+webRequest.SendWebRequest\(\)函数中有 isDone
+
+## async/await
+
+前置条件：
+
+1. 异步的函数，前面要加上关键字：async
+2. 函数内有异步的代码时，在前面加 await
+3. await 后面的代码，返回值必须得是 Task.GetAwaiter
+
+缺点：await 后面的代码必须得实现 Task.GetAwaiter
+
+缺点：可以有返回值。可以使用 try catch
+
+> 如果函数名中包含 async，但函数体内没有 await 就跟正常函数一样。换个角度理解：async和await 必须成对出现才是异步
+
+它的内部也是个 MoveNext 函数，与协程比，它没有 迭代器的概念，是加入了：状态机的概念。但总得看大同小异，都差不多。
+
+## async/await 与 协程对比
+
+相同：
+
+1. 都是单线程，伪异步
+2. 都比较简单，几个关键字，不像线程 得做变量安全、异常处理等
+3. 如果有非常耗时的代码，依然会阻塞主线程
+
+区别：
+
+1. 协程的限制更多，且是 UNITY 自己实现的
+2. async/await 是在C\#层面实现的，且有返回值有try\-catch
+
+最好的使用建议：在 await yield 后面最后是能接异步函数，保证不会阻塞。
+
+> 异步函数中需要有 isDone 和 GetAwaiter
+
+另外，感觉协程这东西有点鸡肋，或者说跟我理解的真正的协程区别有点大。并不真正的异步，且限制比较多。async\+await 可能略好点
+
+不推荐使用的场景：较长占用执行时间的代码
+
+总结：这两个东西更适合一些小场景，不占用执行时间的场景。大点复杂的应用，可能多线程更好一些。
+
+## TASK
+
+它是C\#实现的，有点像任务调度系统。底层并不是：每个执行体就开一个线程。它是有个线程池。把需要执行的函数代码调度性的分配到池子里的线程来执行。但至少是真的异步执行。
+
+感觉C\#这个功能挺方便的：
+
+1. 减少了开发者自己处理线程。真要是开发自己管理线程很麻烦的。
+2. 语言自带了个任务调度功能，不用中间件和自己实现了。确实方便
+3. 也确实是真的实现了异步
+
+几个经常用的函数：
+
+run：创建一个任务并立即执行
+
+start：将已创建的任务，运行起来
+
+wait：等待某个任务执行完毕后，再执行后面的代码
+
+waitAll：等待某些任务执行完毕后，再执行后面的代码
+
+ContinueWith：某个任务执行完后，可以再注册个回调函数，继续执行
+
+Result：
+
+异常处理：一个线程无法捕获另一个线程的异常（调用任务函数的外部加try\-catch不是起使用的），另外，执行函数中，使用TRY\-CATCH也是没用的，但可以直接抛出异常，该异常会在 wait/waitALL 返回的时候，判断状态获取到。也可以给wait/waitAll 加 try\-catch捕获。也可以用 ContinueWith \+ Task.Exception 获取
+
+取消任务
+
+var tokenSource2 = new CancellationTokenSource\(\);
+
+CancellationToken ct = tokenSource2.Token;
+
+tokenSource2.Cancel\(\);
+
+Created
+
+WaitingToRun
+
+RanToCompletion
+
+delegate%EF%BC%88%E5%A7%94%E6%89%98%EF%BC%89%0A\-\-\-\-%0A%60%60%60%0A%2F%2F%E5%A3%B0%E6%98%8E%E4%B8%80%E4%B8%AA%E5%A7%94%E6%89%98%20XXXX%0Apublic%20delegate%20void%20XXXX\(\)%3B%0A%60%60%60%0A%60%60%60%0A%2F%2F%E5%AE%9A%E4%B9%89%20XXXX%20%E7%9A%84%E4%B8%80%E4%B8%AA%E5%8F%98%E9%87%8F%0Apublic%20XXXX%20delegateObj1%3B%0A%0A%2F%2F%E5%AE%9A%E4%B9%89%E4%B8%80%E4%B8%AA%E7%9C%9F%E5%AE%9E%E7%9A%84%E5%87%BD%E6%95%B0%0Apublic%20void%20func1\(\)%7B%7D%0A%0A%2F%2F%E5%B0%86%E7%9C%9F%E5%AE%9E%E5%87%BD%E6%95%B0%E8%B5%8B%E5%80%BC%E7%BB%99%E5%8F%98%E9%87%8F%0AdelegateObj1%20%3D%20func1%3B%0A%60%60%60%0A%60%60%60%0A%2F%2F%E8%B0%83%E7%94%A8%E5%A7%94%E6%89%98%E5%AF%B9%E8%B1%A1%E7%AD%89%E5%90%8C%E4%BA%8E%E8%B0%83%E7%94%A8%E5%AE%83%E4%BB%A3%E8%A1%A8%E7%9A%84%E5%87%BD%E6%95%B0%0AdelegateObj1\(\)%3B%2F%2F%E7%AD%89%E4%BB%B7%E4%BA%8Efunc1\(\)%3B%0A%60%60%60%0Aevent%0A\-\-\-\-\-\-%0A%60%60%60%0A%2F%2F%E5%A3%B0%E6%98%8E%E4%B8%80%E4%B8%AA%EF%BC%9A%3C%E4%BA%8B%E4%BB%B6%E5%A7%94%E6%89%98%3E%E7%9A%84%E5%8F%98%E9%87%8F%0Apublic%20event%20ImDelegate%20%20AAA%3B%0A%60%60%60%0A%60%60%60%0A%2F%2F%E7%BB%99%E8%BF%99%E4%B8%AA%E5%8F%98%E9%87%8F%E6%B7%BB%E5%8A%A0N%E4%B8%AA%E5%87%BD%E6%95%B0%0AAAA%20%2B%3D%20func1%3B%20%2F%2F%E6%B7%BB%E5%8A%A0%0AAAA%20%2B%3D%20func2%3B%20%2F%2F%E6%B7%BB%E5%8A%A0%0A%60%60%60%0A%60%60%60%0A%E6%89%A7%E8%A1%8C%E8%BF%99%E4%B8%AA%E6%88%90%E5%91%98%E5%8F%98%E9%87%8F%0AAAA\(\)%3B%2F%2F%E6%AD%A4%E6%97%B6%EF%BC%9A%E5%87%BD%E6%95%B0%20func1%20%E5%92%8C%20func2%20%E9%83%BD%E4%BC%9A%E8%B0%83%E7%94%A8%0A%60%60%60%0A%3E%E6%8C%BA%E7%A5%9E%E5%A5%87%E7%9A%84%E4%B8%80%E4%B8%AA%E4%B8%9C%E8%A5%BF......%20%EF%BC%8C%E4%B8%80%E4%B8%AA%E6%8E%A5%E5%8F%A3%E7%9A%84%E5%AE%9E%E7%8E%B0%E7%9A%84N%E4%B8%AA%E5%87%BD%E6%95%B0%EF%BC%8C%E5%8F%AF%E4%BB%A5%E5%8F%A0%E5%8A%A0%EF%BC%8C%E7%BB%9F%E4%B8%80%E8%A7%A6%E5%8F%91%0A%0AAction%2FFunc%20%0A\-\-\-\-%0AAction%3A%E7%94%A8%E4%BA%8E%E6%97%A0%E8%BF%94%E8%BF%98%E5%80%BC%E7%9A%84%E5%A7%94%E6%89%98%E7%B1%BB%E5%9E%8B%0AFunc%3CT%3E%3A%E7%94%A8%E4%BA%8E%E6%9C%89%E8%BF%94%E5%9B%9E%E5%80%BC%E7%9A%84%E5%A7%94%E6%89%98%E7%B1%BB%E5%9E%8B%EF%BC%8C%E6%9C%80%E5%90%8E%E4%B8%80%E4%B8%AA%E7%B1%BB%E5%9E%8B%E5%8F%82%E6%95%B0%20T%20%E4%BB%A3%E8%A1%A8%E8%BF%94%E8%BF%98%E5%80%BC%E7%B1%BB%E5%9E%8B%E3%80%82%0A%0A%E4%B8%8D%E7%94%A8%E5%86%8D%E5%8D%95%E7%8B%AC%E5%8E%BB%E7%94%B3%E8%AF%B7%E4%B8%80%E4%B8%AA%E5%A7%94%E6%89%98%E4%BA%86%EF%BC%8C%E7%9B%B4%E6%8E%A5%E5%9C%A8%E5%AE%9A%E4%B9%89%E6%88%90%E5%91%98%E5%8F%98%E9%87%8F%E6%97%B6%EF%BC%8C%E5%8F%AF%E4%BB%A5%E7%9B%B4%E6%8E%A5%E4%BD%BF%E7%94%A8%E3%80%82%E6%9C%89%E7%82%B9%E6%B3%9B%E5%9E%8B%E5%87%BD%E6%95%B0%E7%9A%84%E6%84%8F%E6%80%9D%E3%80%82%0A%0A%60%60%60%0A%2F%2Fint%20%E8%BF%94%E5%9B%9E%E5%80%BC%EF%BC%8Cstring%20double%20%E4%B8%BA%E5%8F%82%E6%95%B0%0Apublic%20event%20Func%3Cstring%2Cdouble%2Cint%3E%20myObj%3B%0A%60%60%60%0A%E6%84%9F%E8%A7%89%E6%98%AF%E6%8C%BA%E7%AE%80%E5%8D%95%EF%BC%8C%E4%B8%80%E8%A1%8C%E4%BB%A3%E7%A0%81%EF%BC%8C%E5%8D%B3%E6%9C%89%E5%A7%94%E6%89%98%E7%9A%84%E5%AE%9A%E4%B9%89%EF%BC%8C%E4%B9%9F%E6%9C%89%E5%8F%98%E9%87%8F%E7%9A%84%E5%AE%9A%E4%B9%89%EF%BC%8C%E5%90%8C%E6%97%B6%E6%8A%8A%20event%E4%B9%9F%E5%8A%A0%E8%BF%9B%E5%8E%BB%E4%BA%86%0A%0A%0ALambda%0A\-\-\-\-\-\-%0A%0A%E5%A7%94%E6%89%98%E7%9A%84%E5%8F%98%E9%87%8F%E5%90%8D%20%3D%20\(%E5%8F%82%E6%95%B0%E7%B1%BB%E5%9E%8B%20%E5%8F%82%E6%95%B0%E5%8F%98%E9%87%8F\)%20%3D%3E%20%7B%E5%85%B7%E4%BD%93%E5%87%BD%E6%95%B0%E5%86%85%E5%AE%B9%7D%0A%0A%0A%3E%E6%84%9F%E8%A7%89%E5%AE%83%E8%BF%99%E4%B8%AA%E6%9C%89%E7%82%B9%E5%83%8F%E5%8C%BF%E5%90%8D%E5%87%BD%E6%95%B0%0A%0A%0Asleep%0A\-\-\-\-%0AThread.Sleep\(1000\)%3B%2F%2F%E9%98%BB%E5%A1%9E%E7%BA%BF%E7%A8%8B%0ATask.Delay\(1000\)%3B%2F%2F%E5%BC%82%E6%AD%A5%E9%9D%9E%E9%98%BB%E5%A1%9E%0A%0A%E5%8D%8F%E7%A8%8B%0A\-\-\-\-%0A%E4%BD%BF%E7%94%A8%E5%8D%8F%E7%A8%8B%E7%9A%84%E5%89%8D%E7%BD%AE%E6%9D%A1%E4%BB%B6%EF%BC%9A%0A1.%20%E8%B0%83%E7%94%A8%E8%80%85%E5%BF%85%E9%A1%BB%E7%BB%A7%E6%89%BF%EF%BC%9Amonobehaviour%0A2.%20%E8%B0%83%E7%94%A8%E7%B1%BB%E5%BF%85%E9%A1%BB%E4%BD%BF%E7%94%A8%E5%87%BD%E6%95%B0%20startcoroutine%20%E8%A7%A6%E5%8F%91%E5%8D%8F%E7%A8%8B%E5%87%BD%E6%95%B0%0A2.%20%E5%8D%8F%E7%A8%8B%E5%87%BD%E6%95%B0%E5%BF%85%E9%A1%BB%E8%BF%94%E5%9B%9E%20IEnumerator%20%E7%B1%BB%E5%9E%8B%0A3.%20%E6%9C%80%E7%BB%88%E9%9D%A0%20yield%20%E6%9D%A5%E5%AE%9E%E7%8E%B0%E5%BC%82%E6%AD%A5%0A4.%20%E4%B8%8D%E8%83%BD%E5%9C%A8%E4%BB%A3%E7%A0%81%E4%B8%AD%E7%9B%B4%E6%8E%A5%E4%BD%BF%E7%94%A8%20try\-catch%0A5.%20%E4%B8%8D%E8%83%BD%E6%9C%89%E8%BF%94%E5%9B%9E%E5%80%BC%0A%0A%E4%BB%8E%E4%B8%AD%E7%9C%8B%E4%B8%80%E4%B8%8B%E7%BC%BA%E7%82%B9%EF%BC%9A%0A1.%20%E4%B8%8D%E8%83%BD%20try%20catch%0A2.%20%E5%BF%85%E9%A1%BB%E7%BB%A7%E6%89%BF%20monobehaviour%0A3.%20%E6%B2%A1%E6%9C%89%E8%BF%94%E5%9B%9E%E5%80%BC%EF%BC%8C%E5%B0%B1%E5%BE%97%E6%97%A0%E9%99%90%E5%9B%9E%E8%B0%83%E4%BA%86%0A4.%20%E5%B9%B6%E4%B8%8D%E6%98%AF%E7%9C%9F%E6%AD%A3%E7%9A%84%E5%BC%82%E6%AD%A5%EF%BC%8C%E8%80%8C%E6%98%AF%E4%BC%AA%E5%BC%82%E6%AD%A5%0A%0A%E5%A4%A7%E4%BD%93%E6%89%A7%E8%A1%8C%E8%BF%87%E7%A8%8B%EF%BC%9A%0Amonobehaviour%3Astartcoroutine\-%3EIEnumerator\-%3E%E8%87%AA%E5%B7%B1%E7%9A%84%E5%87%BD%E6%95%B0\-%3Eyeild%E6%8E%A7%E5%88%B6%E6%B5%81%E7%A8%8B%3C\-monobehaviour%E8%B0%83%E5%BA%A6%0A%0A%0A%23%23%23%23%20%E6%A0%B8%E5%BF%831%EF%BC%9AIEnumerable\(MoveNext\)%0A%0AIEnumerable%3A%E8%BF%AD%E4%BB%A3%E5%99%A8%EF%BC%8Cforeach%20%E5%8F%AF%E4%BB%A5%E7%9B%B4%E6%8E%A5%E9%81%8D%E5%8E%86%E5%AE%83%0AIEnumerator%3A%E8%BF%AD%E4%BB%A3%E5%99%A8%2C%E6%88%96%E8%80%85%E5%8F%AB%E5%AF%B9%E8%B1%A1%E5%AE%B9%E5%99%A8%E4%B9%9F%E8%A1%8C%E3%80%82%E5%AE%83%E6%89%8D%E6%98%AF%E6%A0%B8%E5%BF%83%E3%80%82%E4%B8%8A%E9%9D%A2%E6%9B%B4%E5%80%BE%E5%90%91%E6%98%AF%E4%B8%80%E4%B8%AA%E6%8E%A5%E5%8F%A3%EF%BC%8C%E8%80%8C%E8%BF%99%E4%B8%AA%E6%9B%B4%E5%80%BE%E5%90%91%E4%BA%8E%E7%AE%A1%E7%90%86%E5%85%83%E7%B4%A0%E3%80%82%E5%AE%83%E6%8A%8A%E4%B8%80%E4%B8%AA%E5%87%BD%E6%95%B0%E6%8B%86%E5%88%86%E6%88%90\(yeild\)%E8%8B%A5%E5%B9%B2%E4%B8%AA%E5%B0%8F%E5%87%BD%E6%95%B0%EF%BC%8C%E6%94%BE%E5%88%B0%E8%8B%A5%E5%B9%B2%E7%9A%84%E5%85%83%E7%B4%A0%E9%87%8C%EF%BC%8C%E9%81%8D%E5%8E%86%E6%89%A7%E8%A1%8C%E3%80%82\(MoveNext\)%0A%0A%0A%60%60%60%0Apublic%20interface%20IEnumerator%0A%7B%0A%20%20%20%20%20bool%20MoveNext\(\)%3B%2F%2F%E4%B8%8B%E4%B8%80%E6%AE%B5%E4%BB%A3%E7%A0%81\(%E5%87%BD%E6%95%B0\)%E7%9A%84%E5%85%A5%E5%8F%A3%0A%20%20%20%20%20void%20Reset\(\)%3B%0A%20%20%20%20%20Object%20Current%7Bget%3B%7D%2F%2F%E4%B8%8A%E4%B8%80%E6%AC%A1%E6%89%A7%E8%A1%8C%E8%BF%94%E5%9B%9E%E7%9A%84%E7%BB%93%E6%9E%9C%0A%7D%0A%60%60%60%0AIEnumerator%E6%98%AF%E4%B8%AA%E8%BF%AD%E4%BB%A3%E5%99%A8%EF%BC%8C%E4%B8%8D%E5%81%9C%E7%9A%84%E8%B0%83%E7%94%A8%20MoveNext%20%E5%87%BD%E6%95%B0%EF%BC%8C%E5%86%8D%E6%8A%8A%E7%94%A8%E6%88%B7%E8%87%AA%E5%B7%B1%E7%9A%84%E5%87%BD%E6%95%B0%E8%BF%9B%E8%A1%8C%E5%88%86%E6%AE%B5%E6%8B%86%E5%88%86%EF%BC%8C%E5%A6%82%20%20MoveNext%20%E5%87%BD%E6%95%B0%E5%86%85%EF%BC%8C%E7%94%A8%E4%B8%80%E4%B8%AAselect%20%EF%BC%8C%E6%8A%8A%E4%BB%A3%E7%A0%81%E6%8B%86%E6%88%90%E8%8B%A5%E5%B9%B2%E6%AE%B5%EF%BC%8C%E6%89%A7%E8%A1%8C%E6%AF%8F%E6%AE%B5%E5%90%8E%EF%BC%8C%E8%BF%94%E5%9B%9E%E6%89%A7%E8%A1%8C%E7%9A%84%E4%BD%8D%E7%BD%AE%E3%80%82%E4%B8%8B%E6%AC%A1%E5%86%8D%E6%89%A7%E8%A1%8C%20MoveNext%20%E5%87%BD%E6%95%B0%EF%BC%8C%E5%B0%B1%E7%9B%B4%E6%8E%A5%E8%B7%B3%E5%88%B0%E4%B8%8B%E4%B8%80%E4%B8%AA%E6%AE%B5%E7%9A%84%E5%87%BD%E6%95%B0%E3%80%82%0A%0A%E6%89%80%E4%BB%A5%EF%BC%8C%E4%B8%A5%E6%A0%BC%E6%9D%A5%E8%AF%B4%E5%AE%83%E5%B9%B6%E4%B8%8D%E6%98%AF%E7%BA%AF%E5%BC%82%E6%AD%A5%EF%BC%8C%E4%BE%9D%E7%84%B6%E8%BF%98%E6%98%AF%E5%9C%A8%E4%B8%BB%E7%BA%BF%E7%A8%8B%E4%B8%8A%E6%89%A7%E8%A1%8C\(%E6%AF%8F%E6%AC%A1update%E4%B9%8B%E5%90%8Elateupdate%E4%B9%8B%E5%89%8D\)%E3%80%82%0A%0A%23%23%23%20%E6%A0%B8%E5%BF%832%20yield%0A%E5%A6%82%E4%BD%95%E8%87%AA%E5%B7%B1%E5%8E%BB%E5%AE%9E%E7%8E%B0%20IEnumerator%20%E7%B1%BB%EF%BC%8C%E9%87%8D%E5%A4%8D%E4%BB%A3%E7%A0%81%E5%A4%AA%E5%A4%9A%EF%BC%8C%E4%B8%94%E6%9C%89%E5%8D%B1%E9%99%A9%E3%80%82%E5%A6%82%E6%9E%9C%E6%9F%90%E4%B8%AA%E5%87%BD%E6%95%B0%EF%BC%8C%E6%83%B3%E5%9C%A8%E6%9F%90%E4%B8%AA%E7%82%B9%E5%81%9A%E6%8B%86%E5%88%86%EF%BC%8C%E7%9B%B4%E6%8E%A5%E5%9C%A8%E5%89%8D%E9%9D%A2%E5%8A%A0%E4%B8%AA%20yield%20%E5%B0%B1%E8%A1%8C%E4%BA%86%E3%80%82%0A%3E%20yield%20%E6%98%AFC%23%20%E7%9A%84%E3%80%82%20monobehaviour%20%E8%BF%99%E4%B8%AA%E9%B8%9F%E4%B8%9C%E8%A5%BF%E6%98%AF%20UNITY%E7%9A%84%0A%0A%0A%0A%0A%7C%20%E4%BB%A3%E7%A0%81%20%7C%20%E6%8F%8F%E8%BF%B0%20%7C%20%20%7C%0A%7C%20\-\-\-%20%7C%20\-\-\-%20%7C%20\-\-\-%20%7C%0A%7C%20yield%20return%20null%20%7C%20%E4%B8%8B%E4%B8%80%E5%B8%A7%E5%86%8D%E6%89%A7%E8%A1%8C%E5%90%8E%E7%BB%AD%E4%BB%A3%E7%A0%81%20%7C%20%20%7C%0A%7C%20yield%20break%20%7C%20%E7%9B%B4%E6%8E%A5%E7%BB%93%E6%9D%9F%E8%AF%A5%E5%8D%8F%E7%A8%8B%E7%9A%84%E5%90%8E%E7%BB%AD%E6%93%8D%E4%BD%9C%20%7C%20%20%7C%0A%7C%20yield%20return%20asyncOperation%20%7C%20%E7%AD%89%E5%BC%82%E6%AD%A5%E6%93%8D%E4%BD%9C%E7%BB%93%E6%9D%9F%E5%90%8E%E5%86%8D%E6%89%A7%E8%A1%8C%E5%90%8E%E7%BB%AD%E4%BB%A3%E7%A0%81%7C%20%7C%0A%7C%20yield%20return%20StartCoroution%20%7C%20%E7%AD%89%E5%BE%85%E6%9F%90%E4%B8%AA%E5%8D%8F%E7%A8%8B%E6%89%A7%E8%A1%8C%E5%AE%8C%E6%AF%95%E5%90%8E%E5%86%8D%E6%89%A7%E8%A1%8C%E5%90%8E%E7%BB%AD%E4%BB%A3%E7%A0%81%20%7C%20%20%7C%0A%7C%20yield%20return%20WWW\(\)%20%7C%20%E7%AD%89%E5%BE%85WWW%E6%93%8D%E4%BD%9C%E5%AE%8C%E6%88%90%E5%90%8E%E5%86%8D%E6%89%A7%E8%A1%8C%E5%90%8E%E7%BB%AD%E4%BB%A3%E7%A0%81%20%7C%20%20%7C%0A%7C%20yield%20return%20new%20WaitForEndOfFrame\(\)%20%7C%20%E7%AD%89%E5%BE%85%E5%B8%A7%E7%BB%93%E6%9D%9F%2C%E7%AD%89%E5%BE%85%E7%9B%B4%E5%88%B0%E6%89%80%E6%9C%89%E7%9A%84%E6%91%84%E5%83%8F%E6%9C%BA%E5%92%8CGUI%E8%A2%AB%E6%B8%B2%E6%9F%93%E5%AE%8C%E6%88%90%E5%90%8E%EF%BC%8C%E5%9C%A8%E8%AF%A5%E5%B8%A7%E6%98%BE%E7%A4%BA%E5%9C%A8%E5%B1%8F%E5%B9%95%E4%B9%8B%E5%89%8D%E6%89%A7%E8%A1%8C%20%7C%20%20%7C%0A%7C%20yield%20return%20new%20WaitForSeconds\(0.3f\)%20%7C%20%E7%AD%89%E5%BE%850.3%E7%A7%92%EF%BC%8C%E4%B8%80%E6%AE%B5%E6%8C%87%E5%AE%9A%E7%9A%84%E6%97%B6%E9%97%B4%E5%BB%B6%E8%BF%9F%E4%B9%8B%E5%90%8E%E7%BB%A7%E7%BB%AD%E6%89%A7%E8%A1%8C%EF%BC%8C%E5%9C%A8%E6%89%80%E6%9C%89%E7%9A%84Update%E5%87%BD%E6%95%B0%E5%AE%8C%E6%88%90%E8%B0%83%E7%94%A8%E7%9A%84%E9%82%A3%E4%B8%80%E5%B8%A7%E4%B9%8B%E5%90%8E%EF%BC%88%E8%BF%99%E9%87%8C%E7%9A%84%E6%97%B6%E9%97%B4%E4%BC%9A%E5%8F%97%E5%88%B0Time.timeScale%E7%9A%84%E5%BD%B1%E5%93%8D%EF%BC%89%20%7C%20%20%7C%0A%7C%20%20%7C%20%20%7C%20%20%7C%0A%0A%0A%3Eyield%20return%20XXXX%0A%0A%E9%80%9A%E8%BF%87%20%E4%B8%8A%E9%9D%A2%E7%9A%84%E8%A1%A8%E8%BE%BE%E5%BC%8F%EF%BC%8C%E4%B9%9F%E5%B0%B1%E6%98%AF%E5%85%B3%E9%94%AE%E5%AD%97%EF%BC%9Ayield%20return%20any\-Object%EF%BC%8C%E5%AE%9E%E7%8E%B0%E4%BA%86%E5%BC%82%E6%AD%A5%0Aany\-Object%EF%BC%9A%E5%8F%AF%E4%BB%A5%E6%98%AF%E4%BB%BB%E6%84%8F%E5%80%BC%EF%BC%8C%E5%A6%82%E6%A0%87%E9%87%8F%E7%9A%84%E6%95%B4%E5%BD%A2%E3%80%81%E5%AD%97%E7%AC%A6%E4%B8%B2%E7%AD%89%E3%80%82%E4%B9%9F%E5%8F%AF%E4%BB%A5%E6%98%AF%E4%B8%AA%E5%AF%B9%E8%B1%A1%EF%BC%8C%E8%BF%98%E5%8F%AF%E4%BB%A5%E6%98%AF%E4%B8%AA%E6%89%A7%E8%A1%8C%E5%87%BD%E6%95%B0%0A%0A%E8%BF%99%E9%87%8C%E9%87%8D%E7%82%B9%E8%AF%B4%E4%B8%80%E4%B8%AA%EF%BC%9A%0A%3Eyield%20return%20webRequest.SendWebRequest\(\)%3B%0A%0AwebRequest.SendWebRequest\(\)%E5%87%BD%E6%95%B0%E4%B8%AD%E6%9C%89%20isDone%0A%0A%0Aasync%2Fawait%0A\-\-\-\-%0A%E5%89%8D%E7%BD%AE%E6%9D%A1%E4%BB%B6%EF%BC%9A%0A1.%20%E5%BC%82%E6%AD%A5%E7%9A%84%E5%87%BD%E6%95%B0%EF%BC%8C%E5%89%8D%E9%9D%A2%E8%A6%81%E5%8A%A0%E4%B8%8A%E5%85%B3%E9%94%AE%E5%AD%97%EF%BC%9Aasync%0A2.%20%E5%87%BD%E6%95%B0%E5%86%85%E6%9C%89%E5%BC%82%E6%AD%A5%E7%9A%84%E4%BB%A3%E7%A0%81%E6%97%B6%EF%BC%8C%E5%9C%A8%E5%89%8D%E9%9D%A2%E5%8A%A0%20await%0A3.%20await%20%E5%90%8E%E9%9D%A2%E7%9A%84%E4%BB%A3%E7%A0%81%EF%BC%8C%E8%BF%94%E5%9B%9E%E5%80%BC%E5%BF%85%E9%A1%BB%E5%BE%97%E6%98%AF%20Task.GetAwaiter%0A%0A%E7%BC%BA%E7%82%B9%EF%BC%9Aawait%20%E5%90%8E%E9%9D%A2%E7%9A%84%E4%BB%A3%E7%A0%81%E5%BF%85%E9%A1%BB%E5%BE%97%E5%AE%9E%E7%8E%B0%20%20Task.GetAwaiter%0A%E7%BC%BA%E7%82%B9%EF%BC%9A%E5%8F%AF%E4%BB%A5%E6%9C%89%E8%BF%94%E5%9B%9E%E5%80%BC%E3%80%82%E5%8F%AF%E4%BB%A5%E4%BD%BF%E7%94%A8%20try%20catch%0A%0A%3E%E5%A6%82%E6%9E%9C%E5%87%BD%E6%95%B0%E5%90%8D%E4%B8%AD%E5%8C%85%E5%90%AB%20async%EF%BC%8C%E4%BD%86%E5%87%BD%E6%95%B0%E4%BD%93%E5%86%85%E6%B2%A1%E6%9C%89%20await%20%E5%B0%B1%E8%B7%9F%E6%AD%A3%E5%B8%B8%E5%87%BD%E6%95%B0%E4%B8%80%E6%A0%B7%E3%80%82%E6%8D%A2%E4%B8%AA%E8%A7%92%E5%BA%A6%E7%90%86%E8%A7%A3%EF%BC%9Aasync%E5%92%8Cawait%20%E5%BF%85%E9%A1%BB%E6%88%90%E5%AF%B9%E5%87%BA%E7%8E%B0%E6%89%8D%E6%98%AF%E5%BC%82%E6%AD%A5%0A%0A%E5%AE%83%E7%9A%84%E5%86%85%E9%83%A8%E4%B9%9F%E6%98%AF%E4%B8%AA%20MoveNext%20%E5%87%BD%E6%95%B0%EF%BC%8C%E4%B8%8E%E5%8D%8F%E7%A8%8B%E6%AF%94%EF%BC%8C%E5%AE%83%E6%B2%A1%E6%9C%89%20%E8%BF%AD%E4%BB%A3%E5%99%A8%E7%9A%84%E6%A6%82%E5%BF%B5%EF%BC%8C%E6%98%AF%E5%8A%A0%E5%85%A5%E4%BA%86%EF%BC%9A%E7%8A%B6%E6%80%81%E6%9C%BA%E7%9A%84%E6%A6%82%E5%BF%B5%E3%80%82%E4%BD%86%E6%80%BB%E5%BE%97%E7%9C%8B%E5%A4%A7%E5%90%8C%E5%B0%8F%E5%BC%82%EF%BC%8C%E9%83%BD%E5%B7%AE%E4%B8%8D%E5%A4%9A%E3%80%82%0A%0A%0Aasync%2Fawait%20%E4%B8%8E%20%E5%8D%8F%E7%A8%8B%E5%AF%B9%E6%AF%94%0A\-\-\-\-%0A%E7%9B%B8%E5%90%8C%EF%BC%9A%0A1.%20%E9%83%BD%E6%98%AF%E5%8D%95%E7%BA%BF%E7%A8%8B%EF%BC%8C%E4%BC%AA%E5%BC%82%E6%AD%A5%0A2.%20%E9%83%BD%E6%AF%94%E8%BE%83%E7%AE%80%E5%8D%95%EF%BC%8C%E5%87%A0%E4%B8%AA%E5%85%B3%E9%94%AE%E5%AD%97%EF%BC%8C%E4%B8%8D%E5%83%8F%E7%BA%BF%E7%A8%8B%20%E5%BE%97%E5%81%9A%E5%8F%98%E9%87%8F%E5%AE%89%E5%85%A8%E3%80%81%E5%BC%82%E5%B8%B8%E5%A4%84%E7%90%86%E7%AD%89%0A3.%20%E5%A6%82%E6%9E%9C%E6%9C%89%E9%9D%9E%E5%B8%B8%E8%80%97%E6%97%B6%E7%9A%84%E4%BB%A3%E7%A0%81%EF%BC%8C%E4%BE%9D%E7%84%B6%E4%BC%9A%E9%98%BB%E5%A1%9E%E4%B8%BB%E7%BA%BF%E7%A8%8B%0A%0A%E5%8C%BA%E5%88%AB%EF%BC%9A%0A1.%20%E5%8D%8F%E7%A8%8B%E7%9A%84%E9%99%90%E5%88%B6%E6%9B%B4%E5%A4%9A%EF%BC%8C%E4%B8%94%E6%98%AF%20UNITY%20%E8%87%AA%E5%B7%B1%E5%AE%9E%E7%8E%B0%E7%9A%84%0A2.%20async%2Fawait%20%E6%98%AF%E5%9C%A8C%23%E5%B1%82%E9%9D%A2%E5%AE%9E%E7%8E%B0%E7%9A%84%EF%BC%8C%E4%B8%94%E6%9C%89%E8%BF%94%E5%9B%9E%E5%80%BC%E6%9C%89try\-catch%0A%0A%0A%E6%9C%80%E5%A5%BD%E7%9A%84%E4%BD%BF%E7%94%A8%E5%BB%BA%E8%AE%AE%EF%BC%9A%E5%9C%A8%20await%20yield%20%E5%90%8E%E9%9D%A2%E6%9C%80%E5%90%8E%E6%98%AF%E8%83%BD%E6%8E%A5%E5%BC%82%E6%AD%A5%E5%87%BD%E6%95%B0%EF%BC%8C%E4%BF%9D%E8%AF%81%E4%B8%8D%E4%BC%9A%E9%98%BB%E5%A1%9E%E3%80%82%0A%3E%E5%BC%82%E6%AD%A5%E5%87%BD%E6%95%B0%E4%B8%AD%E9%9C%80%E8%A6%81%E6%9C%89%20isDone%20%E5%92%8C%20GetAwaiter%0A%0A%E5%8F%A6%E5%A4%96%EF%BC%8C%E6%84%9F%E8%A7%89%E5%8D%8F%E7%A8%8B%E8%BF%99%E4%B8%9C%E8%A5%BF%E6%9C%89%E7%82%B9%E9%B8%A1%E8%82%8B%EF%BC%8C%E6%88%96%E8%80%85%E8%AF%B4%E8%B7%9F%E6%88%91%E7%90%86%E8%A7%A3%E7%9A%84%E7%9C%9F%E6%AD%A3%E7%9A%84%E5%8D%8F%E7%A8%8B%E5%8C%BA%E5%88%AB%E6%9C%89%E7%82%B9%E5%A4%A7%E3%80%82%E5%B9%B6%E4%B8%8D%E7%9C%9F%E6%AD%A3%E7%9A%84%E5%BC%82%E6%AD%A5%EF%BC%8C%E4%B8%94%E9%99%90%E5%88%B6%E6%AF%94%E8%BE%83%E5%A4%9A%E3%80%82async%2Bawait%20%E5%8F%AF%E8%83%BD%E7%95%A5%E5%A5%BD%E7%82%B9%0A%0A%E4%B8%8D%E6%8E%A8%E8%8D%90%E4%BD%BF%E7%94%A8%E7%9A%84%E5%9C%BA%E6%99%AF%EF%BC%9A%E8%BE%83%E9%95%BF%E5%8D%A0%E7%94%A8%E6%89%A7%E8%A1%8C%E6%97%B6%E9%97%B4%E7%9A%84%E4%BB%A3%E7%A0%81%0A%0A%E6%80%BB%E7%BB%93%EF%BC%9A%E8%BF%99%E4%B8%A4%E4%B8%AA%E4%B8%9C%E8%A5%BF%E6%9B%B4%E9%80%82%E5%90%88%E4%B8%80%E4%BA%9B%E5%B0%8F%E5%9C%BA%E6%99%AF%EF%BC%8C%E4%B8%8D%E5%8D%A0%E7%94%A8%E6%89%A7%E8%A1%8C%E6%97%B6%E9%97%B4%E7%9A%84%E5%9C%BA%E6%99%AF%E3%80%82%E5%A4%A7%E7%82%B9%E5%A4%8D%E6%9D%82%E7%9A%84%E5%BA%94%E7%94%A8%EF%BC%8C%E5%8F%AF%E8%83%BD%E5%A4%9A%E7%BA%BF%E7%A8%8B%E6%9B%B4%E5%A5%BD%E4%B8%80%E4%BA%9B%E3%80%82%0A%0ATASK%0A\-\-\-\-%0A%E5%AE%83%E6%98%AFC%23%E5%AE%9E%E7%8E%B0%E7%9A%84%EF%BC%8C%E6%9C%89%E7%82%B9%E5%83%8F%E4%BB%BB%E5%8A%A1%E8%B0%83%E5%BA%A6%E7%B3%BB%E7%BB%9F%E3%80%82%E5%BA%95%E5%B1%82%E5%B9%B6%E4%B8%8D%E6%98%AF%EF%BC%9A%E6%AF%8F%E4%B8%AA%E6%89%A7%E8%A1%8C%E4%BD%93%E5%B0%B1%E5%BC%80%E4%B8%80%E4%B8%AA%E7%BA%BF%E7%A8%8B%E3%80%82%E5%AE%83%E6%98%AF%E6%9C%89%E4%B8%AA%E7%BA%BF%E7%A8%8B%E6%B1%A0%E3%80%82%E6%8A%8A%E9%9C%80%E8%A6%81%E6%89%A7%E8%A1%8C%E7%9A%84%E5%87%BD%E6%95%B0%E4%BB%A3%E7%A0%81%E8%B0%83%E5%BA%A6%E6%80%A7%E7%9A%84%E5%88%86%E9%85%8D%E5%88%B0%E6%B1%A0%E5%AD%90%E9%87%8C%E7%9A%84%E7%BA%BF%E7%A8%8B%E6%9D%A5%E6%89%A7%E8%A1%8C%E3%80%82%E4%BD%86%E8%87%B3%E5%B0%91%E6%98%AF%E7%9C%9F%E7%9A%84%E5%BC%82%E6%AD%A5%E6%89%A7%E8%A1%8C%E3%80%82%0A%0A%E6%84%9F%E8%A7%89C%23%E8%BF%99%E4%B8%AA%E5%8A%9F%E8%83%BD%E6%8C%BA%E6%96%B9%E4%BE%BF%E7%9A%84%EF%BC%9A%0A1.%20%E5%87%8F%E5%B0%91%E4%BA%86%E5%BC%80%E5%8F%91%E8%80%85%E8%87%AA%E5%B7%B1%E5%A4%84%E7%90%86%E7%BA%BF%E7%A8%8B%E3%80%82%E7%9C%9F%E8%A6%81%E6%98%AF%E5%BC%80%E5%8F%91%E8%87%AA%E5%B7%B1%E7%AE%A1%E7%90%86%E7%BA%BF%E7%A8%8B%E5%BE%88%E9%BA%BB%E7%83%A6%E7%9A%84%E3%80%82%0A2.%20%E8%AF%AD%E8%A8%80%E8%87%AA%E5%B8%A6%E4%BA%86%E4%B8%AA%E4%BB%BB%E5%8A%A1%E8%B0%83%E5%BA%A6%E5%8A%9F%E8%83%BD%EF%BC%8C%E4%B8%8D%E7%94%A8%E4%B8%AD%E9%97%B4%E4%BB%B6%E5%92%8C%E8%87%AA%E5%B7%B1%E5%AE%9E%E7%8E%B0%E4%BA%86%E3%80%82%E7%A1%AE%E5%AE%9E%E6%96%B9%E4%BE%BF%0A3.%20%E4%B9%9F%E7%A1%AE%E5%AE%9E%E6%98%AF%E7%9C%9F%E7%9A%84%E5%AE%9E%E7%8E%B0%E4%BA%86%E5%BC%82%E6%AD%A5%0A%0A%E5%87%A0%E4%B8%AA%E7%BB%8F%E5%B8%B8%E7%94%A8%E7%9A%84%E5%87%BD%E6%95%B0%EF%BC%9A%0Arun%EF%BC%9A%E5%88%9B%E5%BB%BA%E4%B8%80%E4%B8%AA%E4%BB%BB%E5%8A%A1%E5%B9%B6%E7%AB%8B%E5%8D%B3%E6%89%A7%E8%A1%8C%0Astart%EF%BC%9A%E5%B0%86%E5%B7%B2%E5%88%9B%E5%BB%BA%E7%9A%84%E4%BB%BB%E5%8A%A1%EF%BC%8C%E8%BF%90%E8%A1%8C%E8%B5%B7%E6%9D%A5%0Await%EF%BC%9A%E7%AD%89%E5%BE%85%E6%9F%90%E4%B8%AA%E4%BB%BB%E5%8A%A1%E6%89%A7%E8%A1%8C%E5%AE%8C%E6%AF%95%E5%90%8E%EF%BC%8C%E5%86%8D%E6%89%A7%E8%A1%8C%E5%90%8E%E9%9D%A2%E7%9A%84%E4%BB%A3%E7%A0%81%0AwaitAll%EF%BC%9A%E7%AD%89%E5%BE%85%E6%9F%90%E4%BA%9B%E4%BB%BB%E5%8A%A1%E6%89%A7%E8%A1%8C%E5%AE%8C%E6%AF%95%E5%90%8E%EF%BC%8C%E5%86%8D%E6%89%A7%E8%A1%8C%E5%90%8E%E9%9D%A2%E7%9A%84%E4%BB%A3%E7%A0%81%0AContinueWith%EF%BC%9A%E6%9F%90%E4%B8%AA%E4%BB%BB%E5%8A%A1%E6%89%A7%E8%A1%8C%E5%AE%8C%E5%90%8E%EF%BC%8C%E5%8F%AF%E4%BB%A5%E5%86%8D%E6%B3%A8%E5%86%8C%E4%B8%AA%E5%9B%9E%E8%B0%83%E5%87%BD%E6%95%B0%EF%BC%8C%E7%BB%A7%E7%BB%AD%E6%89%A7%E8%A1%8C%0AResult%EF%BC%9A%0A%0A%E5%BC%82%E5%B8%B8%E5%A4%84%E7%90%86%EF%BC%9A%E4%B8%80%E4%B8%AA%E7%BA%BF%E7%A8%8B%E6%97%A0%E6%B3%95%E6%8D%95%E8%8E%B7%E5%8F%A6%E4%B8%80%E4%B8%AA%E7%BA%BF%E7%A8%8B%E7%9A%84%E5%BC%82%E5%B8%B8%EF%BC%88%E8%B0%83%E7%94%A8%E4%BB%BB%E5%8A%A1%E5%87%BD%E6%95%B0%E7%9A%84%E5%A4%96%E9%83%A8%E5%8A%A0try\-catch%E4%B8%8D%E6%98%AF%E8%B5%B7%E4%BD%BF%E7%94%A8%E7%9A%84%EF%BC%89%EF%BC%8C%E5%8F%A6%E5%A4%96%EF%BC%8C%E6%89%A7%E8%A1%8C%E5%87%BD%E6%95%B0%E4%B8%AD%EF%BC%8C%E4%BD%BF%E7%94%A8TRY\-CATCH%E4%B9%9F%E6%98%AF%E6%B2%A1%E7%94%A8%E7%9A%84%EF%BC%8C%E4%BD%86%E5%8F%AF%E4%BB%A5%E7%9B%B4%E6%8E%A5%E6%8A%9B%E5%87%BA%E5%BC%82%E5%B8%B8%EF%BC%8C%E8%AF%A5%E5%BC%82%E5%B8%B8%E4%BC%9A%E5%9C%A8%20wait%2FwaitALL%20%E8%BF%94%E5%9B%9E%E7%9A%84%E6%97%B6%E5%80%99%EF%BC%8C%E5%88%A4%E6%96%AD%E7%8A%B6%E6%80%81%E8%8E%B7%E5%8F%96%E5%88%B0%E3%80%82%E4%B9%9F%E5%8F%AF%E4%BB%A5%E7%BB%99wait%2FwaitAll%20%E5%8A%A0%20try\-catch%E6%8D%95%E8%8E%B7%E3%80%82%E4%B9%9F%E5%8F%AF%E4%BB%A5%E7%94%A8%20ContinueWith%20%2B%20Task.Exception%20%E8%8E%B7%E5%8F%96%0A%0A%E5%8F%96%E6%B6%88%E4%BB%BB%E5%8A%A1%0A%0Avar%20tokenSource2%20%3D%20new%20CancellationTokenSource\(\)%3B%0ACancellationToken%20ct%20%3D%20tokenSource2.Token%3B%0AtokenSource2.Cancel\(\)%3B%0A%0A%0ACreated%0AWaitingToRun%0ARanToCompletion%0A
