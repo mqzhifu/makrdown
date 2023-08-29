@@ -1,0 +1,15 @@
+go.sum
+.idea/
+latest_log*
+config/config.toml
+./zgoframe
+node_modules
+package-lock.json
+vendor
+.DS_Store
+desktop.ini
+docs
+static/upload
+static/download
+package.json
+.obsidian
