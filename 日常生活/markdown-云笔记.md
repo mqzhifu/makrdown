@@ -1,6 +1,4 @@
 
-
-
 # 概览
 
 ## 什么是云笔记
@@ -143,52 +141,49 @@ bear ulysses
 
 ## 插件：
 
-| name                             | desc                                              |        |
-| -------------------------------- | ------------------------------------------------- | ------ |
-| cmenu                            | 副文本操作工具栏。可以设置在上/下/跟随浮动        | 工具栏 |
-| Editing Toolbar                  | 副文本操作工具栏。从 cmenu 衍生的，改良版。       | 工具栏 |
-| Advanced Tables                  | 快捷操作：创建表格、新增行、格式化表格内容        | 表格   |
-| Markdown Table Editor            | 可视化编辑表格，但它是生成 md 的代码，还要再复制  | 表格   |
-| table extended                   | 可以合并单元格                                    | 表格   |
-| File Explorer Note Count         | 目录包含文件的统计                                | 文件   |
-| Outliner                         | 列表中跳转，感觉没啥用                            | 内容   |
-| quite outline                    | 大纲/索引 ，ob 内置这个功能了，不用再安装这个插件 | 内容   |
-| Calendar                         | 日历 感觉没啥用                                   | 工具   |
-| mindmap                          | 脑图，根据你当前的 md 文档，自动生成脑图          | 画图   |
-| markmind                         | 直接可以画脑图                                    | 画图   |
-| Excalidraw                       | 画板/流程图，手绘风格，挺神奇                     | 画图   |
-| Commander                        | 状态栏、侧边栏、状态栏 添加自定义按钮             | 工具栏 |
-| Obsidian Pangu                   | 给内容中的：中文英文添加空格 ctrl+shitf+s         | 内容   |
-| Hover Editor                     | 浮窗。有内部引用的时候，浮窗显示引用的具体内容    | 窗口   |
-| Pandoc Plugin                    | 导出各种格式                                      | 文件   |
-| Editor Syntax HighLight          | 代码高亮，不过好像OB内置有了                      | 内容   |
-| Latex Envirnoments               | 数学公式                                          | 内容   |
-| Day Planner                      | 日程管理                                          | 工具   |
-| remember cursor position         | 记住打开的文件上次编辑所在位置                    | 内容   |
-| diagrams / Sequence Diagram      |                                                   | 画图   |
-|                                  |                                                   |        |
-| Image Auto Upload Plugin         | 上传图床                                          | 图片       |
-| Clear Unused Images Local images |                                                   |        |
-| Obsidian Git                     |                                                   |        |
-| Templater                        |                                                   |        |
-| Link Favicons                    |                                                   |        |
-| Image Toolkit                    |                                                   |        |
-| Recent Files                     | 最近打开文件                                      |        |
-| quick add                        |                                                   |        |
-| kanban                           |                                                   |        |
-| obsidian-admonition              |                                                   |        |
-| minimal-settings                 |                                                   |        |
-| tabs                             |                                                   |        |
-| memo                             |                                                   |        |
-| proxy github                     | 插件都在github，国内不好访问，加个代理            |        |
-| quick exploler                   |                                                   |        |
-| style setting                    |                                                   |        |
-|                                  |                                                   |        |
-| notion                           | 没找着                                            |        |
-| Dataview                         | 搜索，根据内容中添加的 yaml                       |        |
-| Enhancing mindmap                | 具说有 bug                                        |        |
-|                                  |                                                   |        |
-| Auto Link Title                  |                                                   |        |
+| name                             | desc                                              |           |
+| -------------------------------- | ------------------------------------------------- | --------- |
+| cmenu                            | 副文本操作工具栏。可以设置在上/下/跟随浮动        | 工具栏    |
+| Editing Toolbar                  | 副文本操作工具栏。从 cmenu 衍生的，改良版。       | 工具栏    |
+| Advanced Tables                  | 快捷操作：创建表格、新增行、格式化表格内容        | 表格      |
+| Markdown Table Editor            | 可视化编辑表格，但它是生成 md 的代码，还要再复制  | 表格      |
+| table extended                   | 可以合并单元格                                    | 表格      |
+| File Explorer Note Count         | 目录包含文件的统计                                | 文件      |
+| Outliner                         | 列表中跳转，感觉没啥用                            | 内容 列表 |
+| quite outline                    | 大纲/索引 ，ob 内置这个功能了，不用再安装这个插件 | 内容 大纲 |
+| Calendar                         | 日历 感觉没啥用                                   | 工具      |
+| mindmap                          | 脑图，根据你当前的 md 文档，自动生成脑图          | 画图      |
+| markmind                         | 直接可以画脑图                                    | 画图      |
+| Excalidraw                       | 画板/流程图，手绘风格，挺神奇                     | 画图      |
+| Commander                        | 状态栏、侧边栏、状态栏 添加自定义按钮             | 工具栏    |
+| Obsidian Pangu                   | 给内容中的：中文英文添加空格 ctrl+shitf+s         | 内容 过滤 |
+| Hover Editor                     | 浮窗。有内部引用的时候，浮窗显示引用的具体内容    | 窗口      |
+| Pandoc Plugin                    | 导出各种格式                                      | 文件      |
+| Editor Syntax HighLight          | 代码高亮，不过好像OB内置有了                      | 内容 美化 |
+| Latex Envirnoments               | 数学公式                                          | 工具      |
+| Day Planner                      | 日程管理                                          | 工具      |
+| remember cursor position         | 记住打开的文件上次编辑所在位置                    | 文件 定位 |
+| Image Auto Upload Plugin         | 上传图床                                          | 图片      |
+| Clear Unused Images Local images | 清理未使用的图片                                  | 图片      |
+| Obsidian Git                     | 在ob中可以直接使用git提交代码                     | 工具      |
+| Image Toolkit                    | 点击图片放大                                      |    图片       |
+| Recent Files                     | 最近打开的文件，OB 好像内置有了                   |     文件      |
+| quick add                        |                                                   |           |
+| admonition                       | 给文本添加效果，确实不错，但是不兼容MD            | 内容      |
+| Auto Link Title                  | 引用外部链接时，直接提取标题                      | 内容 链接 |
+| Link Favicons                    | 引用外部链接时，直接提取icon                      | 内容 链接 |
+| proxy github                     | 插件都在github，国内不好访问，加个代理            | 代理      |
+| Dataview                         | 搜索，根据内容中添加的 yaml                       | 搜索      |
+| style setting                    |                                                   |           |
+| notion                           | 没找着                                            |           |
+| Enhancing mindmap                | 具说有 bug                                        |           |
+| diagrams / Sequence Diagram      |                                                   |           |
+| memo                             |                                                   |           |
+| quick exploler                   |                                                   |           |
+
+
+
+
 
 应该把它当成一个代码 IDE 来用，得有：images css 目录
 
@@ -231,11 +226,12 @@ obsidian：保存深度的知识体系，即：把 notion 再加工提炼
 从有道换到印像，最终到 Obsidian 。感觉，云笔记这种东西，越搞越离谱，越搞越背离初衷，越搞越越烂。原来写个笔记 2 分钟，用了印像笔记得写 10 分钟，花里胡哨的一堆。最终得出结论：其实就用个 markdown ，有些基础的格式功能差不多就够了，再有个云同步，剩下的主要还是看作者如何构思笔记。其余功能我觉得全是多余。
 
 
+[百度一下，你就知道](https://www.baidu.com/)
+
+[[wx2.png]]
 
 
-
-
-
+![[wx2.png]]
 
 
 
