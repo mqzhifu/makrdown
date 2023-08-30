@@ -3,25 +3,16 @@
 zookeeper
 
 管理\<服务\>注册与发现：集群、分布式。服务去ZK中注册，客户端去ZK拿服务器信息。
-
 划重点：获取/更改信息，那就得有 文件存储 这个功能。牵扯到文件存储，且是分布式的，那就得有分布式锁。
-
 session：管理两端长连接，当发生变化时，通过两端。
-
 znode：一个Server节点，准确点说，是一个微服务节点，一个服务节点下面会有N台服务器。
-
 watcher：客户端可以注册一个事件，当S端任何变动时，S端会主动推送到C端，以事件驱动的模式，更及时，性能更好。
-
 ACL：对信息进行权限控制。create read write delete admin
-
 分布式集群
-
 每个节点有如下角色：
 
 leader
-
 learner:follower、obServer
-
 client
 
 每个节点状态：looking、leading、following、observer

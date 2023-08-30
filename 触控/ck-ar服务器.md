@@ -1,4 +1,3 @@
-
 # 测试机
 
 223.72.141.97
@@ -10,14 +9,12 @@
 2. prometheus 收集指标
 3. grafana 可视化指标
 
-
 # 阿里云-账号
 
 | 名   | 值               |
 | ---- | ---------------- |
 | name | seedreality      |
-| ps   | Qwerty1234\!@\#$ | 
-
+| ps   | Qwerty1234\!@\#$ |
 
 # 服务器-配置
 
@@ -36,28 +33,28 @@ CPU：4核
 管家服务：是
 ```
 
-|key     |value                                        |
-|--------|---------------------------------------------|
+| key      | value                                         |
+| -------- | --------------------------------------------- |
 | 生效时间 | 2022\-06\-15 18:40:01 ~ 2023\-06\-16 00:00:00 |
 | -------- | --------------------------------------------- |
 | 金额     | ¥2,306.88                                     |
 | os       | centos8.1                                     |
-| 外网IP   | 8.142.161.156                                 |
-| 内网IP   | 172.27.218.143                                |
+| 外网 IP  | 8.142.161.156                                 |
+| 内网 IP  | 172.27.218.143                                |
 
 # SSH
 
-|角色    |用户名|密码            |
-|--------|------|----------------|
-|普通用户|seedar|~\!@\#$QAZwsxedc|
-|普通用户|rsync |~\!@\#qazWSXedc |
-|管理员  |root  |CKseedarxr666   |
+| 角色     | 用户名 | 密码             |
+| -------- | ------ | ---------------- |
+| 普通用户 | seedar | ~\!@\#$QAZwsxedc |
+| 普通用户 | rsync  | ~\!@\#qazWSXedc  |
+| 管理员   | root   | CKseedarxr666    |
 
-> 不允许: root 使用 ssh 直接登陆，可用普通账号登陆后再切换root
+> 不允许: root 使用 ssh 直接登陆，可用普通账号登陆后再切换 root
 
 # 本地文件同步到线上服务器
 
-查看模块下目录\(已被禁止\)
+查看模块下目录(已被禁止)
 
 > rsync \-\-port=8877 \-\-list\-only rsync@8.142.161.156::install
 
@@ -77,53 +74,53 @@ touch /etc/rsync.ps.db
 
 # 目录说明
 
-|统一存储目录说明|位置              |
-|----------------|------------------|
-|所有日志        |/data/logs/       |
-|所有项目日志    |/data/logs/www    |
-|所有备份        |/data/bak         |
-|所有代码        |/data/www         |
-|软件安装包      |/install/zip      |
-|软件安装包解包  |/install/src      |
-|上传图片        |/data/file\_upload|
+| 统一存储目录说明 | 位置              |
+| ---------------- | ----------------- |
+| 所有日志         | /data/logs/       |
+| 所有项目日志     | /data/logs/www    |
+| 所有备份         | /data/bak         |
+| 所有代码         | /data/www         |
+| 软件安装包       | /install/zip      |
+| 软件安装包解包   | /install/src      |
+| 上传图片         | /data/file_upload |
 
-# 软件
+# 软件/端口号
 
-|                  |版本  |端口           |
-|------------------|------|---------------|
-|ssh               |      |6655           |
-|/soft/apache      |2.4.46|8088           |
-|/soft/nginx       |1.18.0|80             |
-|/soft/rsync       |      |8877           |
-|/soft/etcd        |3.4.14|2372           |
-|/etc/supervisord.d|4.2.2 |9988           |
-|/soft/redis       |6.0.9 |6375 外网不开放|
-|/soft/php         |7.4.12|9000 外网不开放|
-|/soft/jdk         |1.8.0 |无端口         |
-|/soft/go          |1.16.1|无端口         |
-|/soft/tomcat      |8.5.81|8080 外网不开放|
-|mysql 阿里云      |8.0   |3306           |
+|                    | 版本   | 端口            |
+| ------------------ | ------ | --------------- |
+| ssh                |        | 6655            |
+| /soft/apache       | 2.4.46 | 8088            |
+| /soft/nginx        | 1.18.0 | 80              |
+| /soft/rsync        |        | 8877            |
+| /soft/etcd         | 3.4.14 | 2372            |
+| /etc/supervisord.d | 4.2.2  | 9988            |
+| /soft/redis        | 6.0.9  | 6375 外网不开放 |
+| /soft/php          | 7.4.12 | 9000 外网不开放 |
+| /soft/jdk          | 1.8.0  | 无端口          |
+| /soft/go           | 1.16.1 | 无端口          |
+| /soft/tomcat       | 8.5.81 | 8080 外网不开放 |
+| mysql 阿里云       | 8.0    | 3306            |
 
 # 域名
 
-|域名           |使用情况|备案  |
-|---------------|--------|------|
-|seedxr.com     |未使用  |未备案|
-|seedxr.net     |未使用  |未备案|
-|seedxr.cn      |未使用  |未备案|
-|seedreality.com|已使用  |已备案|
+| 域名            | 使用情况 | 备案   |
+| --------------- | -------- | ------ |
+| seedxr.com      | 未使用   | 未备案 |
+| seedxr.net      | 未使用   | 未备案 |
+| seedxr.cn       | 未使用   | 未备案 |
+| seedreality.com | 已使用   | 已备案 |
 
 # 域名解析
 
-|域名                          |说明                                 |
-|------------------------------|-------------------------------------|
-|adminapi.seedreality.com      |后台管理系统\-api接口                |
-|ossservicebase.seedreality.com|阿里云\-OSS\-文件存储                |
-|api.seedreality.com           |基服务:文件管理、配置中心等          |
-|static.seedreality.com        |表态资源：html css js 小图片 小文件等|
-|godoc.seedreality.com         |基服务代码结构说明                   |
-|admin.seedreality.com         |后台管理系统                         |
-|aliemail.seedreality.com      |阿里云\-邮件推送服务                 |
+| 域名                           | 说明                                  |
+| ------------------------------ | ------------------------------------- |
+| adminapi.seedreality.com       | 后台管理系统\-api 接口                |
+| ossservicebase.seedreality.com | 阿里云\-OSS\-文件存储                 |
+| api.seedreality.com            | 基服务:文件管理、配置中心等           |
+| static.seedreality.com         | 表态资源：html css js 小图片 小文件等 |
+| godoc.seedreality.com          | 基服务代码结构说明                    |
+| admin.seedreality.com          | 后台管理系统                          |
+| aliemail.seedreality.com       | 阿里云\-邮件推送服务                  |
 
 # redis
 
@@ -138,7 +135,6 @@ touch /etc/rsync.ps.db
 基础服务 ：文件处理、配置中心等
 端口：1111
 
-
 ## 后台
 
 https://admin.seedreality.com/
@@ -151,10 +147,9 @@ Zwebuigo
 Zwebuivue
 后台管理系统
 
-## 用户/平台 
+## 用户/平台
 
 tomcat\webapps/platform/
-
 
 # mysql
 
@@ -173,22 +168,22 @@ RDS规格：2 核 4GB（单机基础版）
 网络类型：专有网络
 ```
 
-|key     |value                                                  |
-|--------|-------------------------------------------------------|
-|生效时间|2022\-06\-15 18:40:01 ~ 2023\-06\-16 00:00:00          |
-|价格    |¥ 520.80                                               |
-|外网IP  |rm\-8vb10pi2gz9rma8p8vo.mysql.zhangbei.rds.aliyuncs.com|
-|内网IP  |rm\-8vb10pi2gz9rma8p8.mysql.zhangbei.rds.aliyuncs.com  |
+| key      | value                                                   |
+| -------- | ------------------------------------------------------- |
+| 生效时间 | 2022\-06\-15 18:40:01 ~ 2023\-06\-16 00:00:00           |
+| 价格     | ¥ 520.80                                                |
+| 外网 IP  | rm\-8vb10pi2gz9rma8p8vo.mysql.zhangbei.rds.aliyuncs.com |
+| 内网 IP  | rm\-8vb10pi2gz9rma8p8.mysql.zhangbei.rds.aliyuncs.com   |
 
 用户
 
-|角色    |用户名  |密码       |
-|--------|--------|-----------|
-|管理员  |superman|ckarCKAR789|
-|普通用户|seed    |willbeOK618|
+| 角色     | 用户名   | 密码        |
+| -------- | -------- | ----------- |
+| 管理员   | superman | ckarCKAR789 |
+| 普通用户 | seed     | willbeOK618 |
 
-> 普通用户，只有DML权限
-> 注：mysql直连，必须得加IP白名单
+> 普通用户，只有 DML 权限
+> 注：mysql 直连，必须得加 IP 白名单
 
 ## mysql-ui-admin
 
@@ -196,11 +191,11 @@ http://8.142.161.156:8088/pma
 
 ## 业务数据库-说明
 
-|数据库名      |说明        |
-|--------------|------------|
-|seed          |微\(基\)服务|
-|gva           |后台管理系统|
-|seed\_platform|用户/平台   |
+| 数据库名      | 说明         |
+| ------------- | ------------ |
+| seed          | 微\(基\)服务 |
+| gva           | 后台管理系统 |
+| seed_platform | 用户/平台    |
 
 # superVisor
 
@@ -212,16 +207,16 @@ http://8.142.161.156:8088/pma
 
 # 监控/prometheus
 
-|目录                      |版本  |端口号|
-|--------------------------|------|------|
-|/soft/nginx\-vst\-export  |0.10.3|9913  |
-|/soft/node\_export        |1.0.1 |9100  |
-|/soft/etcd                |      |2372  |
-|jmx\_prometheus\_javaagent|      |30018 |
-|mysqld\_exporter          |      |9104  |
-|redis\_exporter           |      |9121  |
+| 目录                     | 版本   | 端口号 |
+| ------------------------ | ------ | ------ |
+| /soft/nginx-vst-export   | 0.10.3 | 9913   |
+| /soft/node_export        | 1.0.1  | 9100   |
+| /soft/etcd               |        | 2372   |
+| jmx_prometheus_javaagent |        | 30018  |
+| mysqld_exporter          |        | 9104   |
+| redis_exporter           |        | 9121   |
 
-从supervior中导出重启失败的项目
+从 supervior 中导出重启失败的项目
 
 ```
 cd /soft/exporter
@@ -233,16 +228,16 @@ cd /soft/exporter
 
 metrics
 
-|名称                |metrics                          |grafana                                                                                                         |
-|--------------------|---------------------------------|----------------------------------------------------------------------------------------------------------------|
-|node\_expoter       |http://8.142.161.156:9100/metrics|http://192.168.1.21:3000/d/rYdddlPWk/node\-exporter\-full?orgId=1&refresh=1m                                    |
-|nginx\_vts\_exporter|http://8.142.161.156:9913/metrics|http://192.168.1.21:3000/d/gc73XI37k/nginx\-vts\-stats?orgId=1                                                  |
-|mysqld\_expoter     |http://8.142.161.156:9104/metrics|http://192.168.1.21:3000/d/MQWgroiiz/mysql\-overview?orgId=1&refresh=1m                                         |
-|redis\_expoter      |http://8.142.161.156:9121/metrics|http://192.168.1.21:3000/d/xDLNRKUWz/redis\-dashboard\-for\-prometheus\-redis\-exporter\-helm\-stable\-redis\-ha|
-|etcd                |http://8.142.161.156:2379/metrics|http://192.168.1.21:3000/d/EY1WzHqnz/etcd\-by\-prometheus?orgId=1                                               |
-|tomcat              |http://8.142.161.156:30018/      |http://192.168.1.21:3000/d/chanjarster\-jvm\-dashboard/jvm\-dashboard?orgId=1&refresh=10s                       |
+| 名称               | metrics                           | grafana                                                                                                          |
+| ------------------ | --------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| node_expoter       | http://8.142.161.156:9100/metrics | http://192.168.1.21:3000/d/rYdddlPWk/node\-exporter\-full?orgId=1&refresh=1m                                     |
+| nginx_vts_exporter | http://8.142.161.156:9913/metrics | http://192.168.1.21:3000/d/gc73XI37k/nginx\-vts\-stats?orgId=1                                                   |
+| mysqld_expoter     | http://8.142.161.156:9104/metrics | http://192.168.1.21:3000/d/MQWgroiiz/mysql\-overview?orgId=1&refresh=1m                                          |
+| redis_expoter      | http://8.142.161.156:9121/metrics | http://192.168.1.21:3000/d/xDLNRKUWz/redis\-dashboard\-for\-prometheus\-redis\-exporter\-helm\-stable\-redis\-ha |
+| etcd               | http://8.142.161.156:2379/metrics | http://192.168.1.21:3000/d/EY1WzHqnz/etcd\-by\-prometheus?orgId=1                                                |
+| tomcat             | http://8.142.161.156:30018/       | http://192.168.1.21:3000/d/chanjarster\-jvm\-dashboard/jvm\-dashboard?orgId=1&refresh=10s                        |
 
-grafana\-datashboard\-import\-id
+grafana-datashboard-import-id
 
 ```
 node:1860
@@ -253,11 +248,11 @@ etcd:3070
 jmx:8563
 ```
 
-apache状态查看:
+apache 状态查看:
 
 > http://8.142.161.156:8088/ck-apache-status
 
-nginx状态查看
+nginx 状态查看
 
 > http://8.142.161.156/ck_nginx\_status
 
@@ -288,13 +283,13 @@ servicebase.oss-cn-beijing.aliyuncs.com
 ossservicebase.seedreality.com
 ```
 
-目前只有一个bucket：
+目前只有一个 bucket：
 
 servicebase
 
-> sdk请自动去阿里官方下载，accessKey找王东岩要
+> sdk 请自动去阿里官方下载，accessKey 找王东岩要
 
-# jdk环境变量 (/etc/profile)
+# jdk 环境变量 (/etc/profile)
 
 ```
 export JAVA_HOME=/soft/jdk
@@ -302,8 +297,6 @@ export PATH=$PATH:$JAVA_HOME/bin
 export CLASSPATH=.:$JAVA_HOME/jre/lib/rt.jar:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar
 export JRE_HOME=${JAVA_HOME}/jre
 ```
-
-
 
 # 邮件推送
 
@@ -314,9 +307,9 @@ service@aliemail.seedreality.com
 accessKeyaccessKeySecret = "GcVCuaZA7KWxV0o7UyzzSXhg9zCQfm"
 ```
 
-> 密钥找王东岩要，sdk直接去阿里云下载即可
+> 密钥找王东岩要，sdk 直接去阿里云下载即可
 
-qq企业邮箱：
+qq 企业邮箱：
 
 ```
 host    = "smtp.exmail.qq.com"
@@ -325,7 +318,7 @@ ps      = "mM010010"
 authCode = "2EGdKudfF6KvdosN"
 ```
 
-> 这里的密码和authCode请自行登陆自己的企业邮箱设定 https://exmail.qq.com/login
+> 这里的密码和 authCode 请自行登陆自己的企业邮箱设定 https://exmail.qq.com/login
 
 邮箱组：
 
@@ -337,13 +330,13 @@ dev@seedreality.com
 
 报警：prometheus \+ alertmanager , 硬盘得加监控报警
 CICD UI 可视化
-项目metrcs 收集
-大文件上传nginx
+项目 metrcs 收集
+大文件上传 nginx
 设定防火墙策略
 CDN
 日志文件定期清理
 
-rsync ： 文件/目录权限，IP白名单
+rsync ： 文件/目录权限，IP 白名单
 
 ## 暂时不用
 

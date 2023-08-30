@@ -1,16 +1,13 @@
-# nodejs
-
-## nodejs/npm 安装
+# nodejs/npm 安装
 
 官网
 
-> https://nodejs.org/en
+https://nodejs.org/en
 
-有：win mac linux 版本
+>win mac linux 版本
+>现在是 20 版本，稳定版好像是18
 
-现在是 20 版本，稳定版好像是18
-
-安装都挺简单
+安装很简单，下一步、下一步即可
 
 安装完成后，记得看下是否加到 环境变量中
 
@@ -18,42 +15,28 @@
 
 > node \-v
 
-```
-v18.16.1
-```
-
 node 安全成功 后，会自带 npm
 
 > npm \-v
 
-```
-9.5.1
-```
-
 查看 npm 配置信息
-
 > npm config ls
 
 更改 安装目录
-
 > npm config set prefix "D:\\nodejs\\node\_global"
 
 查看已安装的包：
 
 > npm install webpack \-\-save\-dev
 
-## 创建一个新项目
+# 创建一个新项目
 
 cd /data/nodejs
-
 mkdir projceName
-
 npm init
 
 然后就是一顿回车即可
-
 会在根目录多一个 package.json
-
 vim package.json
 
 ```
@@ -83,7 +66,7 @@ vim package.json
 2. 依赖哪些库
 3. scripts 带些脚本，如：npm run build / npm run serve 等
 
-## webpack
+# webpack
 
 npm i @types/node \-\-save\-dev
 
