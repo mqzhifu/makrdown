@@ -1,63 +1,43 @@
-# 域名/DNS
 
-## 概览
+# 概览
 
-域名：数字\+字母\(汉字、中横线\)\+后缀组成，不区分大小写，一个类似标识符的字符串的东西。其解决了在在互联网中，使用IP很难记的一种东西吧。最最长度是255
+在网络中，想要互相访问得使用网络传输协议TCP/IP，IP层是使用4组数字，但实在难记住，最好能有些字母单词，比较符合人类的认识，于是就有了域名 
 
-> www.baidu.com sing.com.cn apache.org
+## 域名的组成规则
+数字\+字母\(汉字、中横线\)\+后缀组成，不区分大小写，一个类似标识符的字符串的东西。其解决了在在互联网中，使用IP很难记的一种东西吧。最最长度是255
+
+如：www.baidu.com sing.com.cn apache.org
 
 字符串肯定是自己申请的，后缀是死的\(机构制定，我们改不了\)，主要是给域名做个公共分类，后缀类型如下：
 
 com：Commercial organizations,商业组织,公司
-
 xyz：创意、创新；三维空间与无限可能
-
 net：Network operations and service centers,网络服务商
-
 tech：科技、技术
-
 org：Other organizations,非盈利组织
-
 gov：Governmental entities,政府部门
-
 edu：Educational institutions,教研机构
-
 cn:中国
 
 > 世界上第一个注册的域名是在1985年1月注册的
 
 它的整个运行机制\(核心\)是由DNS来管理/驱动的
 
-## DNS
+# DNS
 
 Domain Name System，域名系统
 
-CANN，Internet Corporation for Assigned Names and Numbers
-
-光有域名没用的，必须得有一个权威机构接收你的：申请/注册，且全球唯一。并且提供域名解析成IP的功能
-
-如果全世界就一台服务器，肯定不行，所以就得牵扯到：分布式构架
-
-![domain-tree.png](image/domain-tree.png)
-
-#### 域名解析服务器
+## 域名解析服务器
 
 服务器类型分为：根、顶级域名、权限（权威）域名
-
 根域名服务器：知道所有顶级域名的IP地址，具说是有：13个IP\(不一定是13台机器\)，它也存一些映射IP，但好像它更多的是转发到顶级域名服务器上解析
-
 顶级域名服务器：.com .org 这些，在这些顶级域名注册的二级域名，同时保存权限域名服务器IP
-
 权限域名服务器：负责一个区，或者是3级域名及以上。
 
 > 感觉像是私有的，比如某公司自己可以搞一个，某个政府/国家也可以搞，跟本地域名服务器有点像呢
-> 
-> 
 > 区好像是域的子集
 
 > 所有服务器都必须具有一定解析IP的能力，并且能有其它服务器的地址。
-> 
-> 
 > 任何一台服务器都不太可能存储所有的域名IP
 
 它的查找分为2种方式：递归、迭代
@@ -77,7 +57,6 @@ CANN，Internet Corporation for Assigned Names and Numbers
 4. 最终请求方接收
 
 递归：就是请求方发出一次请求后，等待即可，剩下的是其它各域名服务器之间递归查找
-
 迭代：请求方，发出一次，如果对方未找到IP，会附加的再给你返回下一个域名服务器的IP，请求方需要接着继续找，直接有结果
 
 > 它的这个分布式系统，是真的够松散，会不会有死循环呢？
@@ -114,3 +93,13 @@ ttl:Time To Live,生存周期，域名缓存
 nslookup
 
 dig
+
+# ICANN
+
+Internet Corporation for Assigned Names and Numbers，
+
+光有域名没用的，必须得有一个权威机构接收你的：申请/注册，且全球唯一。并且提供域名解析成IP的功能
+
+如果全世界就一台服务器，肯定不行，所以就得牵扯到：分布式构架
+
+![domain-tree.png](image/domain-tree.png)

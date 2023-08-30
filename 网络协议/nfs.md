@@ -1,13 +1,10 @@
-# nfs
+Network File System
 
-## nfs
+# ubuntu安装
 
 sudo apt\-get install nfs\-kernel\-server \# 安装 NFS服务器端
-
 sudo apt\-get install nfs\-common \# 安装 NFS客户端
-
 sudo /etc/init.d/nfs\-kernel\-server start
-
 sudo /etc/init.d/nfs\-kernel\-server restart
 
 exportfs \-arv

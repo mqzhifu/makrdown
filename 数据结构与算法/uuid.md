@@ -1,4 +1,3 @@
-# uuid
 
 uuid：Universally Unique Identifier 通用唯一标识，是为分布式系统生成不重复的唯一值，极端情况也会有重复的情况。
 

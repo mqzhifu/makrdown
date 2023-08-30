@@ -1,5 +1,6 @@
-letsencrypt
+letsencrypt 一个免费生成HTTPS 证书的软件
 
+官网：
 https://certbot.eff.org/
 
 ==========这种方式已经不支持了===========

@@ -1,18 +1,15 @@
-# https
-
-## 概览
+# 概览
 
 正常HTTP 浏览器请求是80端口，HTTPS默认是443端口
-
 原本是想与HTTP合并成一个文档，但发现HTTPS的东西有点多，索性分拆出来吧
 
 https: Hypertext Transfer Protocol Secure，就是对HTTP的升级，网景公司设计\(1999年，SSL被IETF标准化改名为TLS\)。多了一项加密功能：SSL
 
-### SSL
+# SSL
 
 Secure Sockets Layer：安全套接层。介于应用层和TCP层之间
 
-数据加密的两种方式：
+## 数据加密的两种方式：
 
 1. 对称密钥加密\(Symmetric Key Cryptography\)：加密与解密使用相同密钥。
 2. 非对称密钥加密\(Asymmetric Key Cryptography\)：加密与解密使用不同密钥
@@ -56,7 +53,7 @@ Secure Sockets Layer：安全套接层。介于应用层和TCP层之间
 6. 接收对方返回的数据，用公钥解一下
 7. 公钥验证成功
 
-## CA证书
+# CA证书
 
 Certificate Authorities
 
@@ -72,7 +69,7 @@ Certificate Authorities
 
 有了CA证书\(数字签名\)，基本上就能确保请求传输过程的安全性了
 
-## TSL流程
+# TSL流程
 
 1. client hello
     1. TSL版本号
@@ -174,7 +171,7 @@ openssl genrsa \-out rsa\_private.key 2048
 
 通过后，会返回cer或crt文件
 
-## openssl
+# openssl
 
 这只是一个指令工具集，包括 各种加密算法、密钥加密解密、密钥生成、证书生成等
 
