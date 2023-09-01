@@ -2,7 +2,7 @@
 
 # 进组/线程
 
-单线程 + 多线程 = 主线程 + 工作线程
+单线程 + 多线程 = 主线程 + 工作线程组
 
 ## 主线程
 
@@ -12,17 +12,61 @@
 2. 创建/初始化 工作线程
 3. 初始化 pipe ，用于线程间通信
 4. 初始化内存
-	- 申请物理内核
-	- 创建 slab
-1. 初始化 hashTable
+   - 申请物理内核
+   - 创建 slab
+5. 初始化 hashTable
 
 使用了 libevent 库
 
+大体上它分成两个部分：连接/事件 处理 + 内存管理
+
+# 连接管理
+
+[[memcache-连接.png]]
+
+每个连接的结构体：
+
+```
+struct conn_queue_item {
+    int               sfd;//accept之后的描述符
+    enum conn_states  init_state;//连接的初始状态
+    int               event_flags;//libevent标志
+    int               read_buffer_size;//读取数据缓冲区大小
+    enum network_transport     transport;//内部通信所用的协议
+    CQ_ITEM          *next;//用于实现链表的指针
+};
+```
+
+每个连接最终的容器：
+
+```
+struct conn_queue {
+    CQ_ITEM *head;//头指针，注意这里是单链表，不是双向链表
+    CQ_ITEM *tail;//尾部指针，
+    pthread_mutex_t lock;//锁
+    pthread_cond_t  cond;//条件变量
+};
+```
+
+
+每一个 work 线程，都维护了一个：conn_queue
+主线程拿到 新 客户端 的 socket fd ，会创建   conn_queue_item ，把信息写进 conn_queue_item，接着把 conn_queue_item 再push 到 work 线程 的 conn_queue。
+
+最后，发消息告知 work 线程做出相应处理。
+
+之后，work 线程 监听新的 socket fd ，做IO处理
+
+假设此时：有消息过来，drive_machine  函数介入：
+主要就是解析指令（conn_parse_cmd ）
+执行指令：就是后面的处理了
+返回响应数据
+
 # 内存管理
 
-memcache 采用的是部分预先分配内存，即：在启动时，就把你给它的部分内存空间使用上，进行格式化，等数据的到来，再逐步申请内容 
+[[memcache-内存.png]]
 
-开始是申请大概 256个 slab 
+memcache 采用的是部分预先分配内存，即：在启动时，就把你给它的部分内存空间使用上，进行格式化，等数据的到来，再逐步申请内容
+开始是申请大概 64 个 slab 。其中：0 元素为特殊节点，它不会存 item ，它是给后续 63 个提供内存空间
 
 ## item
 
@@ -32,7 +76,7 @@ typedef struct _stritem {
 	struct _stritem *next;
 	//记录下一个item的地址,主要用于LRU链和freelist链
 	struct _stritem *prev;
-	//记录HashTable的下一个Item的地址
+	//记录 HashTable 的下一个Item的地址
 	struct _stritem *h_next;
 	//最近访问的时间，只有set/add/replace等操作才会更新这个字段
 	//当执行flush命令的时候，需要用这个时间和执行flush命令的时间相比较，来判断是否失效
@@ -46,8 +90,11 @@ typedef struct _stritem {
 	//也可以通过refcount来判断当前的item是否可以被删除，只有refcount -1 = 0的时候才能被删除
 	unsigned short  refcount;
 	uint8_t         nsuffix;    /* length of flags-and-length string */
+	//FETCHED：第一次被访问时置位该标志位。
+	//ACTIVE：第二次被访问时（即it->it_flags & ITEM_FETCHED为true的情况下）置位该标志位
+	//INACTIVE：不活跃状态。(不确定是否有此状态值)
 	uint8_t         it_flags;   /* ITEM_* above */
-	//此 item 属于哪个 slabclass_t 
+	//此 item 属于哪个 slabclass_t
 	uint8_t         slabs_clsid;/* which slab class we're in */
 	uint8_t         nkey;       /* key length, w/terminating null and padding */
 	/* this odd type prevents type-punning issues when we do
@@ -64,14 +111,12 @@ typedef struct _stritem {
 } item;
 ```
 
-它可以分成两部分：元数据 + 数据
-
+它可以分成两个部分：元数据 + 数据
+元数据：连接 slab_class 、LRU 状态、LRU 双向链接地址、失效时间、引用次数、hashTable 的内部链接地址
 data：CAS + key + stuffix + value
 
-item 与 item 之间是有连接的
+item 与 item 之间是有连接： hashTable + LRU
 item 与 slab_class 也互有联系
-
-过期时间也记录在这里
 
 ## slab_class
 
@@ -84,7 +129,7 @@ typedef struct {
     unsigned int perslab;
 	//当前slabclass的（空闲item列表）freelist 的链表头部地址
 	//freelist的链表是通过item结构中的item->next和item->prev连建立链表结构关系
-    void *slots;           //指向空闲item链表
+    void *slots;           //指向空闲 item 链表
     //当前总共剩余多少个空闲的item
     //当sl_curr=0的时候，说明已经没有空闲的item，需要分配一个新的slab（每个1M，可以切割成N多个Item结构）
     unsigned int sl_curr;   //空闲item的个数
@@ -105,54 +150,72 @@ static int power_largest;//slabclass数组中,已经使用了的元素个数.
 
 ```
 
-每个 slab 是 1M(默认，可调)内存空间
+每个 slab 是 大约是 1M(默认，可调)内存空间
+
+> slab 是可变的，对应 chunk 的大小也是可变的随时因子不同，递增。
+
 一个 slab 又被划分成 若干个固定内存大小的 chunk
-每个 chunk 保存一个 item
 
-但 slab 是可变的，对应 chunk 的大小也是可变的
+> chunk 约等于 item
 
-最终所有的 slab 被保存在 slabclass_t 中
+最终所有的 slab 被保存在 slabclass_t 中即，：一个 slab = 一个 slabclass_t
 
-slab_class 又保存 slabclass_t
-
-> slab_class 是个数组
-
+slabclass_t 又被保存于 slab_class 数组中
 slab_class 就可以理解为： memcache 中实际管理（分配）物理内存的类。
 
-每个 slabclass_t 中的 item 大小不是固定的，memecached 有启动，初始化时，好像是以2的N次方递增创建
+实际：每个 slabclass_t 大小是固定的， slabclass_t 中的 item 大小不是固定的，memecached 启动/初始化时，好像是以 1.25 倍递增创建 64 个
 
 ## hashTable
 
-item 的地址会被存于 hashTable 
+每个 item 被创建时，它地址会被存于 hashTable，用于检索。
 
-当查找一个 item 的时候，用 hashTable 做检索
+出现 hash 碰撞，它使用的是拉链法 。也就是一个 hash 值 后面对应不是一个 item ，而是一个链表，依次再找~ 但这个链表是 item h_next 值，实际上不存在单独的一个链表。
 
 ## LRU
 
-Least Recently Used 近期最少使用算法，当内存满后，新进来要存储的数据，会找到不被使用却占用内存的数据，覆盖
+Least Recently Used 近期最少使用算法，用途：
 
-启动时，会创建两个全局变量：heads[] tails []  指向 4个数组:LRU list 
-```
-static item *heads[LARGEST_ID]; //指向各slabclass的LRU链表的head结点  
-static item *tails[LARGEST_ID]; //指向各slabclass的LRU链表的tail结点
-```
+1. 当内存接近饱合时：新进来要存储的数据，会找到不被使用却占用内存的数据
+2. 定期清理一些不常用的数据
 
-因为默认会创建 200个 slab_class ，对应的：  
-heads[0-63] : HOT
-heads[64-127]:warm
-heads[128-191]:COLD
-heads[192-256]:TEMP
+memcached 启动时，会创建 3 个全局变量：heads[] tails [] size_bytes[]
+heads[] tails [] 指向：4 个 LRU list 的 队首/队尾 地址
+size_bytes[] 指向 ：每个 slab_class 占用内存的总大小
 
+heads tails 的使用：以 64 为因子，对应的： 0 64 128 192
 
-每创建一个 slab_class_t 就会连带着创建4个 LRU 链表：HOT WARM COLD TEMP 
+heads[0+slab_class_id] : HOT
+heads[64+slab_class_id]:warm
+heads[128+slab_class_id]:COLD
+heads[192-slab_class_id]:TEMP
 
-4个数组中的所有 LRU 链表由 一个线程：maintainer，统一管理
+每创建一个 slab_class_t 就会连带着创建 4 个 LRU 链表需要操作，即：heads tails 就得+1
 
-清除超时与flushed的item
+### item LRU 流转
+
+3 个判断依据：
+
+- age = 当前时间 - item.time(最后被访问时间) = 此 item 有多久没有被访问过了
+- 内存容量，判定：当前 slabclass 占用内容过多
+- it.flag = FETCHED ACTIVE
+  > if age > age_limit || size_bytes > limit
+
+1. HOT: 所有 item 创建都会进到这里(temp 除外)，一但到队尾，就开始被处理，活跃扔到 warm 非活跃扔到 cold。不会有移动到队头的操作
+2. WARM：访问 2 次及以上的。检测时：如果是活跃状态会重新移到队头，非活跃扔到 cold
+3. COLD：内容不够、失效的、长时间未访问过的，扔到这里。大概率被回收，如果又变成了活跃状态，移到 warm
+4. TEMP：  该队列中的 item TTL 通常只有几秒，不会被挪动队头
+
+每次 item 被移动后，active 状态会被清除
+
+### 小结
+
+所有的 item 被分成了 3 种类型，其中 cold 里的，是最大概率被回收的，省着遍历所有 item 节点了。算是性能提升吧，标记也更精准点。
+
+4 个数组中的所有 LRU 链表由 一个线程：maintainer，统一管理
 
 ## 小结
 
-这4个分类基本上就是 memcache 的核心，其关系
+这 4 个分类基本上就是 memcache 存储的核心，其关系
 
 ```mermaid
 graph LR
@@ -163,23 +226,74 @@ LRU  --> |一对多 | item
 
 ```
 
-
 被操作的节点就是 item ，剩下的都是管理它的组件
 
-# 操作流程
+可以双向查找：
+
+1. 从 slabclass 可以找到 item
+2. 从 hashtable 中找到 item
+
+slabclass 就是纯内存操作，而 hashtable 是从用户操作具体 KEY，这样也算是：内存 绑定 用户数据。用户发送的指令就关心自己的操作。slab 就是管理内存。
+
+## crawler 线程
+
+maintainer crawler 都是高版本加入的，算是一种优化吧。也叫爬虫线程
+
+具说它会扫描 LUR 的链表，把过期的做回收。
+
+## 过期处理
+
+它是懒处理。在 set get flushall 的时候会触发
+
+> 并不像 redis 有个 过期列表
+
+这里不确定的理解：
+
+1. crawler 更倾向于大量的非精确的处理过期 KEY
+2. 懒回收是具体到某一个 KEY
+3. 1 + 2 是结合的使用
+
+CURD
 
 ## 插入
 
-先去 LRU 找，如果有直接使用
-再去  free list 找，如果有直接使用
-创建一个新的 slab
+set 命令最终执行的函数 ：do_item_alloc
 
-## 删除 
+1. 锁定
+2. 添加
+   1. 找到最适合(大小)的 slab
+   2. 去 LRU 列表尾部找：是否有过期的（会循环找 5 次）
+   3. 从 slabclass_t 的 free list 找，是否有空闲
+   4. 分配一个新的 slabclass_t
+   5. 开启 LRU 淘汰策略，肯定能找到一个
+3. 更新 LRU 链表 (item_link_q)
+4. 更新 hashTable
+5. 更新统计数据
+6. 解锁
 
-并不是直的删除，而是将此item 转移到 free list 中
+## 获取
 
+源码函数: do_item_get
 
-## 一致性哈希
+1. 锁定
+1. 换成 hash 值，是否命中
+2. 引用+1
+3. it_flag 更新
+4. 查看是否失效，失效就直接软删除了
+5. 解锁
+
+## 删除
+
+并不是直的删除，而是将此 item 转移到 free list 中
+
+1. 锁定
+2. 更新 状态为：空闲
+3. 清空引用次数
+4. 删除 hashMap 中的 key 值
+5. 删除 lru 值（do_item_unlink）
+6. 更新 slab_class ，链表，由使用中 改成 空闲中
+7. 解锁
+# 一致性哈希
 
 假设有 A B C D E 五台机器，KEY：1 2 3 4 5 ， 机器名 key mod 5 = 落到 哪台机器，如果我再新加一台 F，该算法失效。
 
