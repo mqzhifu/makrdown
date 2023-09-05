@@ -1,39 +1,3 @@
-# LRU
-
-least Recently Used ，最少 最近 被使用的。
-
-## redis 淘汰策略 3 个参数
-
-- maxmemory:占用内存大小。如果为 0，不做限制
-- maxmemory_policy：LUR 规则
-- maxmemory_samples：采样概率
-
-## 几种 LUR 算法规则：
-
-- noeviction:返回错误，不淘汰
-- allkeys-lru:所有的数据均可淘汰，采取 LRU 淘汰
-- allkeys-random:回收所有的数据，采用随机算法
-- volatile-lru:只有设置超时的数据才会淘汰,采用 LUR 算法
-- volatile-ttl:只有设置超时的数据才会淘汰，但采用 TTL 淘汰
-- volatile-random：回收设置超时的数据，采用随机算法
-
-实际上从这几种算法也能看出，既然是缓存数据就应该知道失效时间，任何程序员不设失效时间都是耍流氓。
-
-volatile 是非全量的，所以如果失效时间较多的实例，这种方式清理出的空间很少。而且还浪费计算时间。
-
-WARNING: The TCP backlog setting of 511 cannot be enforced because /proc/sys/net/core/somaxconn is set to the lower value of 128.
-
-WARNING overcommit_memory is set to 0\! Background save may fail under low memory condition
-
-# linux 内存分配策略
-
-/etc/sysctl.conf
-
-vm.overcommit_memory
-
-0， 表示内核将检查是否有足够的可用内存供应用进程使用；如果有足够的可用内存，内存申请允许；否则，内存申请失败，并把错误返回给应用进程。
-1， 表示内核允许分配所有的物理内存，而不管当前的内存状态如何。
-2， 表示内核允许分配超过所有物理内存和交换空间总和的内存
 
 # 启动 redis 报了几个错误
 
