@@ -1,19 +1,4 @@
 
-# 分布式锁
-
-分布式锁，我另外一遍文章写过，可参考。这里，直接上 redis 如何实现：
-
-1. SETNX + EXPIRE(value=过期时间+随时值)
->非原子操作
-2. set local_resource_id value NE EX 10（SET的扩展命令）
-3. 使用Lua脚本(包含SETNX + EXPIRE两条指令)
-	- 长时间占用锁，会阻塞其它连接
-	- 长时间占用锁，超出key的失效时间，再执行删除操作，很可能是其它连接的锁
-1. 开源框架:Redisson，接上面，当获取锁后，进行检查： expireTime / 3 = 每次时间
->好像是基于 java 的
-3. 多机实现的分布式锁Redlock
->redis作者给的方案，主要是解决主从模式/多点出现故障，有点像是etcd cosule 的模式了，选举/应答制度。太复杂了。不推荐  
-
 
 
 # 启动 redis 报了几个错误
