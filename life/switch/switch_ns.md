@@ -4,6 +4,7 @@
 - xxxxx520.cam
 - gamer520.com
 - 2023game.com
+- www.520switch.com
 
 # 游戏列表
 ## 任天堂出品
