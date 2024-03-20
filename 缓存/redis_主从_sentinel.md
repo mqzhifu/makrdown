@@ -1,69 +1,82 @@
+# 概览
+
+Redis 支持三种集群模式，分别为主从模式、哨兵模式和Cluster模式。
+
+
+# 主从模式
+
+
+PSYNC
+
+主节点：写操作
+从节点：读操作
+
+
+同步方式 ：
+1. 全同步
+>主节点把 RDB 完整发给从节点
+3. 增量同步
+
+全同步：
+1. 从节点初次访启动时
+2. 从节点落后主节点太多
+
+增量同步：
+从节点，同步时，带上 offset
+
+同步指令：PSYNC
+
+问题：
+1. 从节点延迟
+2. 主节点挂了，需要手动调整从节点切换成主节点
+3. 全同步的时候，太影响主节点的主线程
+4. 增量同步，也会影响主节点的性能
+5. 如果从节点过多，同步过于频繁还是影响主节点主线程
 
 
 
-# 启动 redis 报了几个错误
 
-WARNING you have Transparent Huge Pages \(THP\) support enabled in your kernel. This will create latency and memory usage issues with Redis. To fix this issue run the command 'echo never \> /sys/kernel/mm/t
+# sentinel/哨兵模式
 
-ransparent_hugepage/enabled' as root, and add it to your /etc/rc.local in order to retain the setting after a reboot. Redis must be restarted after THP is disabled.
 
-# 主从
+redis-server /path/to/redis-sentinel.conf --sentinel
 
-因为，换了端口，redis 从进程，取不到主进程的信息
+单独一个进程，用来监控：redis 实例，收集数据，分析数据
+1.  发送消息，做健康检查 
+2.  如果，主节点出现故障
+	- 把从节点切换成主节点
+	- 通知客户端，主IP挂了，使用新IP
+	>get-master-addr-by-name
 
-顺带，截取一段 redis 日志，看看他的机制：
 
-```
+sentinel 进程启动后：
+1. 根据配置文件，连接主节点
+2. 获取主节点的相关信息
+3. 定时心跳
+4. 订阅：__sentinel__:hello ，并发送：hello:我的IP：PORT
+5. 其它哨兵也是重复上面的过程，sentinel 之间就正常通信了
+6. 当某个节点的 sentinel 发送主节点故障，它就频道里发送：+switch-master 。这里叫：主观下线
+7. 其它节点也会重复上面过程，过半后，该主节点要真的下线了。这里叫：客观下线
+8. 下线后就开启选举新主节点过程
+9. 过程跟 zab raft 类似吧，投票，第一轮选自己。
+10. 同时接收其它 sentinel 的选票，根据每个节点的 同步进度
+11. 一但过半，就找个新的出来
 
-8212:S 16 Apr 2020 20:20:29.108 \* Connecting to MASTER 127.0.0.1:6380
-8212:S 16 Apr 2020 20:20:29.108 \* MASTER \<\-\> REPLICA sync started
-8212:S 16 Apr 2020 20:20:29.108 \* Non blocking connect for SYNC fired the event.
-8212:S 16 Apr 2020 20:20:29.108 \* Master replied to PING, replication can continue...
-8212:S 16 Apr 2020 20:20:29.109 \* Partial resynchronization not possible \(no cached master\)
-8212:S 16 Apr 2020 20:20:29.109 \* Full resync from master: 25a5b45fafeaff32dbfb3dc405aa4afc530ac0fc:0
-8212:S 16 Apr 2020 20:20:29.114 \* MASTER \<\-\> REPLICA sync: receiving 175 bytes from master
-8212:S 16 Apr 2020 20:20:29.114 \* MASTER \<\-\> REPLICA sync: Flushing old data
-8212:S 16 Apr 2020 20:20:29.114 \* MASTER \<\-\> REPLICA sync: Loading DB in memory
-8212:S 16 Apr 2020 20:20:29.114 \* MASTER \<\-\> REPLICA sync: Finished with success
-8212:S 16 Apr 2020 20:33:27.185 \# Connection with master lost.
-8212:S 16 Apr 2020 20:33:27.185 \* Caching the disconnected master state.
-8212:S 16 Apr 2020 20:33:27.785 \* Connecting to MASTER 127.0.0.1:6380
-8212:S 16 Apr 2020 20:33:27.785 \* MASTER \<\-\> REPLICA sync started
-8212:S 16 Apr 2020 20:33:27.785 \# Error condition on socket for SYNC: Connection refused
-8212:S 16 Apr 2020 20:33:28.787 \* Connecting to MASTER 127.0.0.1:6380
-8212:S 16 Apr 2020 20:33:28.787 \* MASTER \<\-\> REPLICA sync started
-8212:S 16 Apr 2020 20:33:28.788 \# Error condition on socket for SYNC: Connection refused
-8212:S 16 Apr 2020 20:33:29.789 \* Connecting to MASTER 127.0.0.1:6380
-8212:S 16 Apr 2020 20:33:29.789 \* MASTER \<\-\> REPLICA sync started
-8212:S 16 Apr 2020 20:33:29.789 \# Error condition on socket for SYNC: Connection refused
-8212:S 16 Apr 2020 20:33:30.791 \* Connecting to MASTER 127.0.0.1:6380
-8212:S 16 Apr 2020 20:33:30.791 \* MASTER \<\-\> REPLICA sync started
-8212:S 16 Apr 2020 20:33:30.791 \# Error condition on socket for SYNC: Connection refused
-8212:S 16 Apr 2020 20:33:31.793 \* Connecting to MASTER 127.0.0.1:6380
-8212:S 16 Apr 2020 20:33:31.793 \* MASTER \<\-\> REPLICA sync started
-8212:S 16 Apr 2020 20:33:31.793 \# Error condition on socket for SYNC: Connection refused
-8212:S 16 Apr 2020 20:33:32.795 \* Connecting to MASTER 127.0.0.1:6380
-8212:S 16 Apr 2020 20:33:32.796 \* MASTER \<\-\> REPLICA sync started
-8212:S 16 Apr 2020 20:33:32.796 \# Error condition on socket for SYNC: Connection refused
-8212:S 16 Apr 2020 20:33:33.798 \* Connecting to MASTER 127.0.0.1:6380
-8212:S 16 Apr 2020 20:33:33.798 \* MASTER \<\-\> REPLICA sync started
-8212:S 16 Apr 2020 20:33:33.798 \# Error condition on socket for SYNC: Connection refused
-8212:S 16 Apr 2020 20:33:34.800 \* Connecting to MASTER 127.0.0.1:6380
-8212:S 16 Apr 2020 20:33:34.800 \* MASTER \<\-\> REPLICA sync started
-8212:S 16 Apr 2020 20:33:34.800 \# Error condition on socket for SYNC: Connection refused
-8212:S 16 Apr 2020 20:33:35.802 \* Connecting to MASTER 127.0.0.1:6380
-8212:S 16 Apr 2020 20:33:35.802 \* MASTER \<\-\> REPLICA sync started
-...........................
 
-8212:S 16 Apr 2020 20:33:40.813 \# Error condition on socket for SYNC: Connection refused
-8212:S 16 Apr 2020 20:33:41.815 \* Connecting to MASTER 127.0.0.1:6380
-8212:S 16 Apr 2020 20:33:41.815 \* MASTER \<\-\> REPLICA sync started
-8212:S 16 Apr 2020 20:33:41.815 \# Error condition on socket for SYNC: Connection refused
-8212:S 16 Apr 2020 20:33:42.422 \# User requested shutdown...
-8212:S 16 Apr 2020 20:33:42.422 \* Removing the pid file.
-```
 
-> 开始同步-> 找配置文件中的 IP：PORT ，然后连接失败，尝试 N 次后，放弃同步。但是进程还是正常起着，没被 KILL
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 流程：
 

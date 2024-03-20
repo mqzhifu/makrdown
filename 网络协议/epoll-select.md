@@ -18,8 +18,10 @@
 
 # select/poll
 
-select 是 C语言 的一个标准库，用于实现 IO多路复用。（出现时间最早）
+select 是 C 语言 的一个标准库，用于实现 IO多路复用。（出现时间最早）
 其核心就是：把若干你想要操作的IO\-FD，扔到某个集合中，然后轮询监听这些FD，不阻塞。只需要一个进程就能解决所有问题。
+
+
 
 函数原型：
 
@@ -29,17 +31,66 @@ int select(int maxfdp,fd_set *readfds,fd_set *writefds,fd_set *errorfds,struct t
 
 函数分析，告诉内核：我有3个文件 FD 集合
 
-1. 读操作
-2. 写操作
-3. 异常操作
+1. 最大的FD
+2. 读操作
+3. 写操作
+4. 异常操作
+5. NULL：阻塞， 0：不管是否有可IO的FD，直接返回，不阻塞。 具体时间：到达一定时间没有事件发生，结果阻塞
 
 继续告知内核：等待多久后，返回就绪 FD 的个数
 
-向某个集合添加 FD:
+集合是个 bitmap 结构
+
+清某个集合清空
+>FD_ZERO( fd_set * fdset  )
+
+删除集合中某个FD，某一位置 0
+>FD_CLR(fd_set  * fdset)
+
+向某个集合添加 FD:某一位置  1
 > FD\_SET\(serverSocket, &read\_set\);
 
-判断某个集合中的某个FD，是否可操作：
+判断某个集合中的某个FD，是否可操作： 某一位置 是否存在 
 > FD\_ISSET\(serverSocket, &read\_set\)
+
+```c++
+socket s;
+int ret = 0;
+.....
+struct timeval tv;
+fd_set set;
+while(1)
+{
+    FD_ZERO(&set);//将你的套节字集合清空
+    FD_SET(s, &set);//加入你感兴趣的套节字到集合,这里是一个读数据的套节字s
+    tv.tv_sec = 0;
+    tv.tv_usec = 100000;//100微秒
+
+    ret = select(s+1,&set,NULL,NULL,&tv);//检查（s+1个）套节字是否可读
+	if(ret > 0)
+	{
+	    if(FD_ISSET(s, &set) //检查s是否在这个集合里面,
+	    { 
+		    //select将更新这个集合,把其中不可读的套节字去掉
+		    //只保留符合条件的套节字在这个集合里面
+		    
+		    //do something here
+	    }		
+	}	    
+}
+
+```
+
+每次都要执行函数：FD_ZERO
+每次都要遍历整个集合，且遍历3次：读( 正常读+accept )、写、异常
+
+
+![[socket_select.jpg]]
+
+当网卡收到数据后，给CPU发中断信号。然后，找到某个 socket 后，会唤醒此进程，但仅仅是唤醒，并不告诉具体是：读、写
+而进程被唤醒后，不知道是读还是写，还需要重复遍历整个集合。
+
+另外，select 函数在执行时，要把集合 从用户态复制到内核态。 当 select 结束后，有数据来，还要把集合从内核态复制到用户态
 
 优点：
 
@@ -53,7 +104,7 @@ int select(int maxfdp,fd_set *readfds,fd_set *writefds,fd_set *errorfds,struct t
     1. 主动 探测 FD是否可 IO。
     2. 只返回就绪 FD 的总数，并不具体到某个FD上。
     3. 每次都要重置 FD\_SET，也就是用户态数据CP到内核态。
-    4. 一但高并发，FD\_SET很大。但活跃的FD只占少数，但是循环遍历整个FD\-SET，很可怕。
+    4. 一但高并发，FD\_SET 很大。但活跃的FD只占少数，但是循环遍历整个FD\-SET，很可怕。
 3. 它不是内核态管理 FD集，而是需要用户态复制到内核态
 
 > 如果能主动回调，就减少了主动轮询，效率应该更好些。
@@ -66,17 +117,25 @@ poll跟它差不多，算是对 select 的升级版。只是 FD 的保存集合 
 
 > unix 下叫 kqueue
 
+
+![[socket_epoll.jpg]]
+
 eventpoll
 
-创建：epoll
+#### 创建：epoll。
 
 > epoll\_create\(int size\)
 
-注册事件
+有3个关键成员变量：
+1. rbr 红黑树 (存储所有需要监听的FD)
+2. rdllist 链表（存储已就绪的FD ）
+3. wait_queue_head_t  ，如果是阻塞模式，把当前进程及回调函数注册进去
+
+#### 注册事件
 
 > epoll\_ctl\( int epfd, int op, int fd, struct epoll\_event \*event\)
 
-等待事件返回
+#### 等待事件返回
 
 > epoll\_wait\(int epfd, struct epoll\_event \*events, int maxevents, int timeout\)
 

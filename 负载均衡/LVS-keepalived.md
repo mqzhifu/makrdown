@@ -1,6 +1,6 @@
 # 概览
 
-Linux Virtual Server:采用 IP 负载均衡技术和基于内容请求分发技术
+Linux Virtual Server：采用 IP 负载均衡技术和基于内容请求分发技术
 
 # LVS 有几种分发模式
 
