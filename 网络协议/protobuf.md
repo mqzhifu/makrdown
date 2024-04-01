@@ -6,7 +6,7 @@
 
 # 大体流程
 
-![protobuf.png](image/protobuf.png)
+![[protobuf.png]]
 
 1. 使用方/发起方，需要先定义\(协调\)好.proto 描述文件
 2. 使用方，需要先下载一个 protobuf 编译器软件
@@ -23,9 +23,9 @@
 
 先看一下最终二进制数据流的格式：
 
-![protobuf-field.png](image/protobuf-field.png)
+![[protobuf_field.png]]
 
-![protobuf-tag.png](image/protobuf-tag.png)
+![[protobuf_tag.png]]
 
 每个字段占一部分，而每个部分又被分成了 3 个子部分\(TLV\(tag\-length\-value\) \)，其实 TAG 子部分又被划分成了：两个子子部分：field_number\+wite_type
 

@@ -1,7 +1,7 @@
 # 概览
 
 
-## 核心功能：
+#### 核心功能：
 
 | 功能                   | 例子                                           |
 | ---------------------- | ---------------------------------------------- |
@@ -12,7 +12,7 @@
 | 负载均衡               | 给后端一组服务器做负载均衡，并自带一些算法     |
 | fastCgi                | PHP NODEJS                                     |
 
-## 其它功能：
+#### 其它功能：
 
 | 功能           | 例子                                              |
 | -------------- | ------------------------------------------------- |
@@ -21,16 +21,15 @@
 | LUA            | 写些脚本，动态挂载到 NGINX，控制 NGINX 的一些处理 |
 | RTMP           | 视频流                                            |
 
-## 小结
 它的核心功能其实就是处理 HTTP 请求。不用你再去写代码了。并且它的性能高、稳定强、可扩展。
 
 # nginx 的核心优势
 
 核心优点：
 
-1. 性能高（处理发并发高）
-2. 兼容主流平台
-3. 满足主流功能的需求
+1. 性能高（epoll 处理发并发高）
+2. 兼容主流平台( win mac linux )
+3. 满足主流功能的需求(http 反向代理 )
 4. 高度灵活，可模块化、可使用 LUA 嵌入开发、可用配置文件驱动
 
 为什么性能高？
@@ -57,17 +56,20 @@
 
 ## core
 
-| 模块                                     | 描述         |
-| ---------------------------------------- | ------------ |
+| 模块 | 描述 |
+| ---- | ---- |
 | array list string buffer tree hash queue | 基础数据结构 |
-| crc crypt md5 sha1                       | 加密算法     |
-| cycle                                    | 生存周期     |
-| inet                                     | 底层网络相关 |
-| log                                      | 日志         |
-| slab palloc                              | 内存处理     |
-| proxy                                    | 代理         |
-| regex                                    | 正则         |
-| config_file                              | 配置文件解析 |
+| crc crypt md5 sha1 | 加密算法 |
+| cycle | 生存周期 |
+| inet | 底层网络相关 |
+| log | 日志 |
+| slab palloc | 内存处理 |
+| proxy | 代理 |
+| regex | 正则 |
+| config_file | 配置文件解析 |
+| epoll |  |
+| event |  |
+| events |  |
 
 ## email
 
@@ -127,7 +129,7 @@ lua\-nginx
 
 # 进程组
 
-master\+worker\+cache\(loader\+manager\)
+master+worker+cache(loader+manager)
 
 master：主要管理 worker。如果某 wokrder 进程挂了，它会重新拉起
 
@@ -135,7 +137,7 @@ worker：处理下下游戏的网络请求。数量与 CPU 核数对应
 
 > master 也会创建 socker 监听端口，但最终还是会把处理权交给 workder.
 
-cache\-loader:上下游请求的缓存、常用文件的缓存
+cache-loader:上下游请求的缓存、常用文件的缓存
 
 cache\-manager:主要是清理一些过期的缓存文件
 
@@ -146,7 +148,7 @@ cache\-manager:主要是清理一些过期的缓存文件
 1. ngx_get_options，主要用于解析命令行中的参数，
 > 如：nginx \-s stop|start|restart
 
-1. ngx_time_init，初始化并更新时间，
+1. ngx_time_init，初始化并更新时间
 > 如： 全局变量 ngx_cached_time
 
 1. ngx_getpid，获取当前进程的 pid。
@@ -168,13 +170,15 @@ cache\-manager:主要是清理一些过期的缓存文件
 3. ngx_preinit_modules，主要是前置的初始化模块，对模块进行编号处理
 4. ngx_init_cycle 方法，完成全局变量 cycle 的初始化
 5. ngx_signal_process，如果有信号，则进入 ngx_signal_process 方法。
-> 例如./nginx \-s stop,则处理 Nginx 的停止信号
-
-1. ngx_get_conf，得到核心模块 ngx_core_conf_t 的配置文件指针
-2. ngx_create_pidfile，创建 pid 文件。
+> 如： nginx -s stop ， 则处理 Nginx 的停止信号
+6. ngx_get_conf，得到核心模块 ngx_core_conf_t 的配置文件指针
+7. ngx_create_pidfile，创建 pid 文件。
 > 例如：/usr/local/nginx\-1.4.7/nginx.pid
 
-1. ngx_master_process_cycle，这函数里面开始真正创建多个 Nginx 的子进程。这个方法包括子进程创建、事件监听、各种模块运行等都会包含进去
+1. ngx_master_process_cycle，这函数里面开始真正创建多个 Nginx 的子进程。包括：
+- 子进程创建
+- 事件监听
+- 各种模块运行等都会包含进去
 
 这里看，其主要的就是：
 
@@ -347,27 +351,36 @@ upstream backend {
    }
 2. 指定权重
    用于后端服务器性能不均的情况
+```c++
    upstream backserver {
-   server 192.168.0.14 weight=10;
-   server 192.168.0.15 weight=10;
-   }
+	   server 192.168.0.14 weight=10;
+	   server 192.168.0.15 weight=10;
+   } 
+```
+
 3. IP 绑定\-hash
    每个访客固定访问一个后端服务器，可以解决 session 的问题
 4. fair
    按后端服务器的响应时间来分配请求，响应时间短的优先分配。
-   upstream backserver {
-   server server1;
-   server server2;
-   fair;
-   }
+```c++
+upstream backserver {
+	server server1;
+	server server2;
+	fair;
+} 
+```
+
 5. url_hash
    按访问 url 的 hash 结果来分配请求，使每个 url 定向到同一个后端服务器，后端服务器为缓存时比较有效。
-   upstream backserver {
-   server squid1:3128;
-   server squid2:3128;
-   hash $request_uri;
-   hash_method crc32;
-   }
+```c++
+upstream backserver {
+	server squid1:3128;
+	server squid2:3128;
+	hash $request_uri;
+	hash_method crc32;
+}   
+```
+
 
 # 一次 HTTP 请求，主要的 11 个阶段
 

@@ -1,12 +1,12 @@
-# session/cookie
 
-SESSION
+# SESSION
 
 工作原理：
 
-S端建立SESSION，以HAS散列保存于S端硬盘上，文件中包含SESSION的一些信息，然后，将SESSION\_ID，以COOKIE方式，响应回给浏览器。如果C端禁用了COOKIE,则在URL中传递。
+S端建立 SESSION，以 HASH 散列保存于S端硬盘上，文件中包含SESSION的一些信息，然后，将SESSION\_ID，以COOKIE方式，响应回给浏览器。如果C端禁用了COOKIE,则在URL中传递。
 
-具体函数：
+
+# 具体函数：
 
 session\_start\(\)：开始一个会话，或者创建一个会话，它有一定概率开启垃圾回收，同时，对应的session文件是被锁定的，直到当前脚本结束才会解锁。
 
@@ -14,7 +14,7 @@ session\_destroy\(\)：删除SESSION 文件
 
 session\_unset\(\); //删除内存中的session信息
 
-具体配置信息
+# 具体配置信息
 
 session.use\_trans\_sid=1 //是否开启url传递PHPSESSION ID
 

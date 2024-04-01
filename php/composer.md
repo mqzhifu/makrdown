@@ -1,6 +1,6 @@
 # 基础使用
 
-第一次安装/初始化，配置好composer.json
+第一次安装/初始化，配置好 composer.json
 >composer install
 
 更新所有包

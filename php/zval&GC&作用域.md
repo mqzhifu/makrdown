@@ -1,74 +1,69 @@
-# zval&GC&hashtable&作用域
 
-===============ZAVL & PHP 变量 ==================================
+# zval / 变量
 
-分类：标量类型、复杂类型、特殊类型。
+PHP中变量类型：
 
-标量：int string bool float
+- 分类：标量类型、复杂类型、特殊类型。
+- 标量：int string bool float
+- 复杂：array object
+- 特殊：null 资源
 
-复杂：array object
+所有的变量，包括：简单类型、复杂类型，到最后的 ZEND 执行的时候，都是申请一个 zval 结构体保存。
 
-特殊：null 资源
+```C
+  typedef struct _zval_struct {
+    zvalue_value value;
+    zend_uint refcount;
+    zend_uchar type;
+    zend_uchar is_ref;
+  } zval;
 
-所有的变量，包括：简单类型、复杂类型，到最后的ZEND执行的时候，都是申请一个 zval 结构体保存。如下：
+```
 
-struct \_zval\_struct {
+```c
+typedef union _zvalue_value {
+    long lval;
+    double dval;
+    struct {
+        char *val;
+        int len;
+    } str;
+    HashTable *ht;
+    zend_object_value obj;
+} zvalue_value;
 
-union {
+```
 
-long lval;
+zval 中的 type 字段，标识该变量的类型，如：
 
-double dval;
+- type = IS_LONG;//整形 -> lval
+- type = IS_BOOL;//布尔值 -> lval
+- type = IS_STRING //字符串 -> str
+- type = IS_ARRAY //数组 -> \*ht
+- type = IS_RESOURCE //文件资源|obj  -> obj
 
-struct {
+这里又包含了一个 union 结构体，实际上就是通过这个结构体，实现了弱类型。
 
-char \*val;
-
-int len;
-
-} str;
-
-HashTable \*ht;
-
-zend\_object\_value obj;
-
-zend\_ast \*ast;
-
-} value;
-
-zend\_uint refcount\_\_gc;
-
-zend\_uchar type;
-
-zend\_uchar is\_ref\_\_gc;
-
-};
-
-这里又包含了一个union结构体，实际上就是通过这个结构体，实现了弱类型。
-
-DEMO：
+#### DEMO：
 
 $b= 3;
 
 1、申请一个zval结构体
-
 2、3是个整形，于是，zval.type = long
-
 3、union结构体最后给了value变量，给变量赋值value.long = 3
 
-字符串类型的会用union中的str保存
+字符串类型的会用 union 中的str保存
 
 bool、资源、int 通用： lval存
 
 数组:HashTable \*ht
-
-对象：zend\_object\_value
+对象：zend_object_value
 
 神奇的\<弱类型\>就这样被完整的实现了。
 
-==========================GC=======================
+# GC
 
-回收主要是内存，内存即变量，其中：复合型变量，如：数组、对象等，更需要回收。
+回收主要是内存，内存即变量，其中：复合型变量，如：数组、对象等，占资源大，非常需要回收。
 
 zval 结构体中，还有refcount\_\_gc is\_ref\_\_gc 两个成员属性没有介绍
 
@@ -120,7 +115,7 @@ C：算法再次以深度优先判断每一个节点包含的zval的值，如果
 
 D：遍历zval节点，将C中标记成白色的节点zval释放掉。
 
-==========================作用域=======================
+# 作用域
 
 symble\_table：保存全局变量，具体是，全局变量名和指向该变量名值的指针\(指向zval\)。
 
@@ -132,21 +127,7 @@ symble\_table：保存全局变量，具体是，全局变量名和指向该变�
 
 以上两个结构体保存于executor\_globals结构体中。
 
-=====================hash table============================
-
-=====================hash table============================
-
-函数中的static：是函数内部变量，且一次大的执行周期内，多次调用都会保留该值
-
-类中static：属于该类且不允许修改
-
-    
-
-$global：将某个变量变成全局的
-
-$GLOBAL\[''\]：全局变量
-
-=====================内存管理============================
+# 内存管理
 
 主要工作就是维护三个列表：小块内存列表（free\_buckets）、大块内存列表（large\_free\_buckets）和剩余内存列表（rest\_buckets）。
 

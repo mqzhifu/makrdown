@@ -104,35 +104,30 @@ style todo方法 fill:#F00,stroke:#333,stroke-width:4px,fill-opacity:0.5
 
 ## Context 接口
 
-```
+```go
 type Context interface {
-
     Deadline() (deadline time.Time, ok bool)
-
     Done() <-chan struct{}
-
     Err() error
-
     Value(key interface{}) interface{}
 }
-
 ```
 
 1. Deadline:返回绑定当前context的任务被取消的截止时间；如果没有设定期限，将返回ok == false。
-2. Done :当绑定当前context的任务被取消时，将返回一个关闭的channel；如果当前context不会被取消，将返回nil。
+2. Done :当绑定当前 context 的任务被取消时，将返回一个关闭的channel；如果当前context不会被取消，将返回nil。
 3. Err :如果Done返回的channel没有关闭，将返回nil;如果Done返回的channel已经关闭，将返回非空的值表示任务结束的原因。如果是context被取消，Err将返回Canceled；如果是context超时，Err将返回DeadlineExceeded。
 4. Value 返回context存储的键值对中当前key对应的值，如果没有对应的key,则返回nil。
 
-## 4个实现了context的类
+## 4个实现了 context 的类
 
-1. emptyCtx 空的Context，只实现了Context interface 4个方法
-2. cancelCtx 继承自Context并实现了canceler interface
-3. timerCtx 继承自cancelCtx，可以用来设置timeout
-4. valueCtx 继承自Context，可以储存一对键值对
+1. emptyCtx 空的 Context，只实现了Context interface 4个方法
+2. cancelCtx 继承自 Context并实现了canceler interface
+3. timerCtx 继承自 cancelCtx，可以用来设置timeout
+4. valueCtx 继承自 Context，可以储存一对键值对
 
 ## emptyCtx
 
-```
+```go
 type emptyCtx int
 
 func (*emptyCtx) Deadline() (deadline time.Time, ok bool) {
@@ -164,9 +159,9 @@ func (e *emptyCtx) String() string {
 
 好像也没什么，就是空实现了context 接口...
 
-emptyCtx:没有超时时间，不能取消，也不能存储任何额外信息，所以emptyCtx用来作为context树的根节点。
+emptyCtx: 没有超时时间，不能取消，也不能存储任何额外信息，所以 emptyCtx 用来作为context树的根节点。
 
-```
+```go
 var (
     background = new(emptyCtx)
     todo       = new(emptyCtx)
@@ -181,18 +176,18 @@ func TODO() Context {
 }
 ```
 
-emptyCtx并不会直接使用，GO提供了两个方法：background todo来实例化.
+emptyCtx 并不会直接使用，GO提供了两个方法：background 和  todo 实例化 emptyCtx来使用
 
 1. Background：通常被用于主函数、初始化以及测试中，作为一个顶层的context，也就是说一般我们创建的context都是基于Background；
 2. TODO：在不确定使用什么context的时候才会使用
 
-> 我是没搞懂有啥本质区别，想起学英语的时候用todo something 这种东西做点位符....
+> 我是没搞懂有啥本质区别，想起学英语的时候用todo something 这种东西像是占位符....
 
 接下来，看下context的3个具体实现类~
 
 ## valueCtx
 
-```
+```go
 type valueCtx struct {
     Context
     key, val interface{}
@@ -206,15 +201,15 @@ func (c *valueCtx) Value(key interface{}) interface{} {
 }
 ```
 
-Context是继承，另外还包含了两个变量：key val
+Context 是继承，另外还包含了两个变量：key val
 
-valueCtx\-value方法：覆写了父类的value方法
+valueCtx-Value方法：覆写了父类的value方法
 
-总结下：valueCtx继承父类context，同时可以有附带值（K/V），覆写了value方法，可用于路径判定。
+总结下：valueCtx 继承父类 context，同时可以有附带值（K/V），覆写了value方法  定。
 
 ## cancelCtx
 
-```
+```go
 type cancelCtx struct {
 	Context
 
@@ -232,14 +227,14 @@ type canceler interface {
 
 Context是继承，但多了几个成员属性：
 
-1. mu:悲观锁，防止协程安全
-2. done:一个管道，用来传递关闭信号
-3. children：用于存储当前节点下的所有子节点
+1. mu: 悲观锁，防止协程安全
+2. done: 一个管道，用来传递关闭信号。它没有数据缓冲，只要调，就会阻塞
+3. children: 用于存储当前节点下的所有子节点
 4. err
 
 canceler是接口,看一下，cancelCtx 如何实现这个接口
 
-```
+```go
 func (c *cancelCtx) Done() <-chan struct{} {
     c.mu.Lock()
     if c.done == nil {
@@ -289,19 +284,23 @@ func (c *cancelCtx) cancel(removeFromParent bool, err error) {
 }
 ```
 
-done\(\):就是获取一个管道（锁控制安全）
+感觉就是操控一个 done 管道，并且此管理没有缓冲 ，也不会写数据，信号是通过关闭一个管道产生的错误来通信
 
-err:没啥说的
+```go
+  _,ok  <- done
+  if !ok {
+	//此conetext 结束
+  }
+```
 
-cancel:这才是核心方法，还是使用锁保证安全，发送关闭信号给done管道，接着取消该context下的子节点，最后将自己从父context节点中移除.
+剩下的就是：关闭子结点，将当前节点从父节点移出
 
-挺简单的，核心值是：children属性，通过这个实现了连带关闭
 
 ## WithCancel
 
-上面的cancelCtx类的使用，得用WithCancel来创建
+上面是： cancelCtx 类， 具体使用，得用WithCancel来创建
 
-```
+```go
 type CancelFunc func()
 
 func WithCancel(parent Context) (ctx Context, cancel CancelFunc) {
@@ -369,7 +368,7 @@ func parentCancelCtx(parent Context) (*cancelCtx, bool) {
 
 ## timerCtx
 
-```
+```go
 type timerCtx struct {
     cancelCtx
     timer *time.Timer // Under cancelCtx.mu.
@@ -398,17 +397,62 @@ func (c *timerCtx) cancel(removeFromParent bool, err error) {
 }
 ```
 
-基于cancelCtx，多了一个timer ,赋值给deadline，没啥特殊的...
+
+```go
+func WithDeadline(parent Context, d time.Time) (Context, CancelFunc) {  
+	// 与 cancelCtx 一样先检查一下 parent Context  
+	if parent == nil {  
+	panic("cannot create context from nil parent")  
+	}  
+	  
+	// 判断 parent Context 是否支持 Deadline，如果支持的话需要判断 parent Context 的截止时间  
+	// 假设 parent Context 的截止时间早于当前设置的截止时间，那就意味着 parent Context 肯定会先  
+	// 被 cancel，同样由于 parent Context 的 cancel 会导致当前这个 child Context 也会被 cancel  
+	// 所以这时候直接返回一个 cancelCtx 就行了，计时器已经没有必要存在了  
+	if cur, ok := parent.Deadline(); ok && cur.Before(d) {  
+		// The current deadline is already sooner than the new one.  
+		return WithCancel(parent)  
+	}  
+	  
+	// 创建一个 timerCtx  
+	c := &timerCtx{  
+		cancelCtx: newCancelCtx(parent),  
+		deadline: d,  
+	}  
+	  
+	// 与 cancelCtx 一样的传播操作  
+	propagateCancel(parent, c)  
+	  
+	// 判断当前时间已经已经过了截止日期，如果超过了直接 cancel  
+	dur := time.Until(d)  
+	if dur <= 0 {  
+		c.cancel(true, DeadlineExceeded) // deadline has already passed  
+		return c, func() { c.cancel(false, Canceled) }  
+	}  
+	  
+	// 所有 check 都没问题的情况下，创建一个定时器，在到时间后自动 cancel  
+	c.mu.Lock()  
+	defer c.mu.Unlock()  
+	if c.err == nil {  
+	c.timer = time.AfterFunc(dur, func() {  
+		c.cancel(true, DeadlineExceeded)  
+		})  
+	}  
+	return c, func() { c.cancel(true, Canceled) }  
+}
+```
+
+timerCtx 是基于 cancel 之上，增加了一个 timer 定时器
+当 定时器 到时间后，执行 cancelCtx  上的 cancel 方法
+
+timerCtx 依然只是一个类，实际使用需要：WithDeadline
+WithDeadline ：也比较简单，基于 timerCtx 这上，根据 定时时间，到时间后就调用  timerCtx 的cancel
 
 ## WithDeadline
 
 父协程可取消的context
 
-## WithTimeout
-
-与上面类似
-
-总结一下吧
+# 总结
 
 1. 有个context接口，该接口算是根接口吧。里面有4个方法，使用者可以都实现，也可以只实现部分（不想实现的直接空实现即可），取决于使用方。
 2. 具体实现context 接口的类是emptyCtx，但是不给开发者直接使用
