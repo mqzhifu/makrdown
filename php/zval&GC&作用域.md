@@ -1,48 +1,65 @@
 
 # zval / 变量
 
-PHP中变量类型：
+PHP中变量类型：标量类型、复杂类型、特殊类型
 
-- 分类：标量类型、复杂类型、特殊类型。
-- 标量：int string bool float
-- 复杂：array object
-- 特殊：null 资源
 
-所有的变量，包括：简单类型、复杂类型，到最后的 ZEND 执行的时候，都是申请一个 zval 结构体保存。
+|  |  |  |
+|:---|:---|:---|
+| 标量 | int string bool float |  |
+| 复杂 | array object |  |
+| 特殊 | 资源 和 null |  |  
+
+
+所有的变量，最终编译成 ZEND opcode 的时候，都是申请一个 zval 结构体保存，结构如下：
 
 ```C
-  typedef struct _zval_struct {
-    zvalue_value value;
-    zend_uint refcount;
-    zend_uchar type;
-    zend_uchar is_ref;
-  } zval;
-
+typedef struct _zval_struct {
+	zvalue_value value; /* 储存变量的值 */
+	zend_uint refcount__gc; /* 引用计数，用于GC */
+	zend_uchar type; /* 储存变量类型 */
+	zend_uchar is_ref__gc; /* 是否为引用，即 &$a */
+} zval;
 ```
 
 ```c
+//zvalue_value结构体
 typedef union _zvalue_value {
-    long lval;
-    double dval;
-    struct {
-        char *val;
-        int len;
-    } str;
-    HashTable *ht;
-    zend_object_value obj;
+    long lval; /* 长整型 */
+    double dval; /* 浮点型 */
+    struct {
+        char *val;
+        int len; /* 字符串的长度 */
+    } str; /* 字符串 */
+    HashTable *ht; /* 哈希 */
+    zend_object_value obj; /* 对象 */
 } zvalue_value;
-
 ```
+
+>注：以上是PHP5的结构定义，PHP7中做了大幅改动，但因其复杂、且核心原理差不多，不写了
+
+一个变量最终就是保存在 \_zval\_struct 结构体内，其中：zvalue_value 才是最终保存实际值的容器。
+
+|  |  |  |
+|:---|:---|:---|
+| lval | 布尔、整形、资源 |  |
+| dval | 浮点 |  |
+| str | 字符串 |  |
+| ht | 数组 |  |
+| obj | 存储对象引用 |  |
+| 所有成员变量均为：0 or null | null |  |  
 
 zval 中的 type 字段，标识该变量的类型，如：
 
-- type = IS_LONG;//整形 -> lval
-- type = IS_BOOL;//布尔值 -> lval
-- type = IS_STRING //字符串 -> str
-- type = IS_ARRAY //数组 -> \*ht
-- type = IS_RESOURCE //文件资源|obj  -> obj
+|  |  |  |
+|:---|:---|:---|
+| IS_LONG | 整形 |  |
+| IS_BOOL | 布尔值 |  |
+| IS_STRING | 字符串 |  |
+| IS_ARRAY | 数组 |  |
+| IS_RESOURCE | 文件资源\|obj  -> obj |  |  
 
-这里又包含了一个 union 结构体，实际上就是通过这个结构体，实现了弱类型。
+通过  zval_value + type 标识 ，就实现了弱类型
 
 #### DEMO：
 
@@ -61,63 +78,173 @@ bool、资源、int 通用： lval存
 
 神奇的\<弱类型\>就这样被完整的实现了。
 
-# GC
+# GC简要说明
 
-回收主要是内存，内存即变量，其中：复合型变量，如：数组、对象等，占资源大，非常需要回收。
 
-zval 结构体中，还有refcount\_\_gc is\_ref\_\_gc 两个成员属性没有介绍
+#### 先要明白一点
 
-refcount\_\_gc ：有多少个变量在引用，如:
+PHP是解释型语言，一次执行后，释放所有内存
+>反向看：PHP并不是守护进程的模式，对于内存的垃圾回收，并不是非常重要。就算有内存泄露，只要不是特别离谱，一次后必然全释放。
 
-$a=1;//refcount\_\_gc = 1,is\_ref\_\_gc = false
+但，加上GC机制，未必全是好事儿，即使使用的是简单的引用计数，还是会影响正常代码的执行速度。
+既然5.3加上了垃圾回收，也证明 PHP 还是可以写 守护进程 模式的
+#### 垃圾回收-算法
 
-$b=$a;//refcount\_\_gc = 2,is\_ref\_\_gc = false
+引用计数法：当一个值，被引用次数为0时，此值在内存中即是垃圾了，可以清查
+>计数法优点是简单，缺点是可能出现循环引用（内存泄露）
+>PHP 就是使用此算法 做GC
 
-实际上引擎是不会开辟两个内存空间来存的，除非其中一个变量值发生了变化，也就是写时复制，copy on wtrit.
+#### zval 中的 GC 变量
 
-is\_ref\_\_gc ：是否被引用，简单说，是否有使用&，如：
+每个变量最终是一个 zval ，其内部有两个成员变量：
+- refcount__gc ：有多少个变量在引用
+- is_ref__gc ：是否被引用，简单说，是否有使用&
 
-$a=1;//refcount\_\_gc = 1,is\_ref\_\_gc = false
+例子：
+```php
+$a=1; //refcount__gc = 1,is_ref__gc = false
+$b=$a;//refcount__gc = 2,is_ref__gc = false
+```
 
-$b= &$a;//refcount\_\_gc = 2,is\_ref\_\_gc = true
+```php
+$a=1;//refcount__gc = 1,is_ref__gc = false
+$b= &$a;//refcount__gc = 2,is_ref__gc = true
+```
 
-当refcount\_\_gc =0 时就会被删除，unset 就是累减refcount\_\_gc
 
-$a = array\( 'one' \);
+>实际上引擎是不会开辟两个内存空间来存的，除非其中一个变量值发生了变化，也就是写时复制，copy on wtrit.
 
-$a\[\] =& $a;
+unset 会触发 zend GC 进行检查，如果 refcount__gc = 0 ，会回收变量值
+>unset 时：就是累减 refcount__gc
 
-数组$a 的第2个元素是自身的引用，成了 循环递归。无法被GC回收，内存泄漏。
+当 refcount__gc =0 时，GC会回收此变量
+但，unset 不一定会触发 GC 删除机制，如果该变量还有其它引用，就不会删除
 
-5.3以前，就是这样，之后的版本做了修改，有如下3条：
+#### 循环引用
 
-1    如果一个zval的refcount增加，那么此zval还在使用，不属于垃圾
 
-2    如果一个zval的refcount减少到0， 那么zval可以被释放掉，不属于垃圾
+```php
+$a = array( 'one');
+$a[] =& $a;
+unset($a);  
+```
 
-3    如果一个zval的refcount减少之后大于0，那么此zval还不能被释放，此zval可能成为一个垃圾。
 
-GC把这个变量移入到GC buffer 中，等待buffer满了，再统一做清理。
+数组 $a 的第2个元素是自身的引用，成了 循环递归。无法被GC回收，内存泄漏。
 
-总结以上：unset 的时候，会触发GC
+# GC 详细
 
-只有在准则3下，GC才会把zval收集起来。
+PHP5.3及以上版本，我们可以通过修改 php.ini 开启GC:
 
-A 为了避免每次变量的refcount减少的时候都调用GC的算法进行垃圾判断，此算法会先把所有前面准则3情况下的zval节点放入一个节点\(root\)缓 冲区\(root buffer\)，
+```php
+zend.enable_gc = On
+```
 
-并且将这些zval节点标记成紫色，同时算法必须确保每一个zval节点在缓冲区中之出现一次。当缓冲区被节点塞满的时候，GC才开始开 始对缓冲区中的zval节点进行垃圾判断。
 
-B：当缓冲区满了之后，算法以深度优先对每一个节点所包含的zval进行减1操作，为了确保不会对同一个zval的refcount重复执行减1操作，一 旦zval的refcount减1之后会将zval标记成灰色。
+PHP内部定义了一个 zend_gc_globals 全局对象来管理GC：
 
-需要强调的是，这个步骤中，起初节点zval本身不做减1操作，但是如果节点zval中包 含的zval又指向了节点zval（环形引用），那么这个时候需要对节点zval进行减1操作。
+```c
+typedef struct _zend_gc_globals {
+    zend_bool         gc_enabled; //是否启用
+    zend_bool         gc_active; //是否处于正在运行状态
 
-C：算法再次以深度优先判断每一个节点包含的zval的值，如果zval的refcount等于0，那么将其标记成白色\(代表垃圾\)，如果zval的 refcount大于0，那么将对此zval以及其包含的zval进行refcount加1操作，这个是对非垃圾的还原操作，同时将这些zval的颜色变 成黑色（zval的默认颜色属性）。
+    gc_root_buffer   *buf;              /* preallocated arrays of buffers   */
+    gc_root_buffer    roots;            /* list of possible roots of cycles */
+    gc_root_buffer   *unused;           /* list of unused buffers           */
+    gc_root_buffer   *first_unused;     /* pointer to first unused buffer   */
+    gc_root_buffer   *last_unused;      /* pointer to last unused buffer    */
 
-D：遍历zval节点，将C中标记成白色的节点zval释放掉。
+    zval_gc_info     *zval_to_free;     /* temporaryt list of zvals to free */
+    zval_gc_info     *free_list;
+    zval_gc_info     *next_to_free;
+
+    zend_uint gc_runs; //gc_collect_cycles执行次数
+    zend_uint collected; //缓冲池回收次数
+	......
+} zend_gc_globals;
+```
+
+两个重要成员变量：
+- gc_root_buffer 
+- zval_gc_info
+
+创建一个新的变量，实际是如下的结构：
+
+```c
+typedef struct _zval_gc_info {
+    zval z;
+    union {
+        gc_root_buffer       *buffered;
+        struct _zval_gc_info *next;
+    } u;
+} zval_gc_info;
+```
+
+\*next 和 \*buffered 都是 null，只有被回收的时候，才会设置这两个值
+\_gc_root_buffer  是个双向链表
+
+```c
+typedef struct _gc_root_buffer {
+    struct _gc_root_buffer   *prev;        /* double-linked list               */
+    struct _gc_root_buffer   *next;
+    zend_object_handle        handle;    /* must be 0 for zval               */
+    union {
+        zval                 *pz;
+        zend_object_handlers *handlers;
+    } u;
+} gc_root_buffer;
+```
+
+
+分析：
+zend_gc_globals 实际内部是一个双向链表，节点类型为：\_gc_root_buffer
+zval_gc_info 就是一个正常的变量，但当GC触发，会与  gc_root_buffer 进行双向绑定
+
+当 unset 时，refcount__gc  - 1 ，同时触发GC机制：
+1. 如果 ref = 0，直接删除此变量，解释内存
+2. 如果 ref > 0 ，会把该变量放到  \_gc_root_buffer list 中
+>节点标记成紫色
+4. 触发GC机制，\_gc_root_buffer < 10000 ，直接 return
+5. \_gc_root_buffer > 10000 ，遍历  zend_gc_globals中的所有节点
+6. 深度遍历所有节点
+7. 如果该节点是复杂类型，且内部还引用其它值，ref_cnt - 1，同时节点标记为灰色
+8. 算法再次以深度优先判断每一个节点包含的zval的值，如果zval的refcount等于0，那么将其标记成白色\(代表垃圾\)，如果zval的 refcount大于0，那么将对此zval以及其包含的zval进行refcount加1操作，这个是对非垃圾的还原操作，同时将这些zval的颜色变 成黑色（zval的默认颜色属性）。
+9. 遍历zval节点，将C中标记成白色的节点zval释放掉
+
+模拟删除->模拟恢复->真正删除
+
+
+
+>具体的删除逻辑我没看
+
+
+php的GC回收机制启动时(php_module_startup),会分配10000个gc_root_buffer的空间：
+
+```c
+ZEND_API void gc_init(TSRMLS_D)  
+{  
+    if (GC_G(buf) == NULL && GC_G(gc_enabled)) {  
+        GC_G(buf) = (gc_root_buffer*) malloc(sizeof(gc_root_buffer) * GC_ROOT_BUFFER_MAX_ENTRIES);  
+        GC_G(last_unused) = &GC_G(buf)[GC_ROOT_BUFFER_MAX_ENTRIES];  
+        gc_reset(TSRMLS_C);  
+    }  
+}
+```
+
+
+大概流程：
+1. PHP启动时，会提前创建 10000 个GC节点
+2. unset 时触发： zval 是否添加到  GC 节点中
+3. 当 10000 个GC节点 都存了数据后，统一处理一次，删除垃圾
+
+#### GC总结
+
+咋说呢，它的GC触发机制比较延迟，且只有 unset + buf 容器大于 10000 。删除的算法也有点暴力。
+应该是做了平衡聚会后，最终用了这个方法，也就是：PHP并不是纯后端语言，不是非常适合写守护进程的模式。更应该关心的是执行效率。
 
 # 作用域
 
-symble\_table：保存全局变量，具体是，全局变量名和指向该变量名值的指针\(指向zval\)。
+symble_table：保存全局变量，具体是，全局变量名和指向该变量名值的指针\(指向zval\)。
 
 该结构体内还包含一个：active\_symble\_table，创建局部变量的时候，会往这个表里添加。
 

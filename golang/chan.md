@@ -1,6 +1,9 @@
 # chan
 
+
+![[h_chan.png]]
 先上源码
+
 
 > go/src/runtime/chan.go
 
@@ -23,8 +26,8 @@ type hchan struct {
 
 
 buf：存数据的队列（数组结构）
-recvq：哪些G在等待接收
-sendq：哪些G在等待发送
+recvq：哪些G在等待接收(记录缓存中的数据读取到哪里了)
+sendq：哪些G在等待发送(记录缓存中的数据发送到哪里了)
 sendx：buf队列，可以发送数据的索引值
 recvx ：buf队列，可以接收的数据的索引值
 

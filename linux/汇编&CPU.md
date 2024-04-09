@@ -1,12 +1,17 @@
-# 汇编&CPU
 
-ASCII\(american standard code for information interchange\):美国信息交换标准码
+
+# ASCII
+
+american standard code for information interchange : 美国信息交换标准码
 
 以8个二进制，共256个
 
 国标码，以16个二进制位，高8位表示汉字的区号，低8位表示汉字符的位号
 
-指令集：将特定一组二进制数写到CPU某个位置，告诉计算机，这条指令应该做什么，比如：算术运算，读取地址等
+
+# 指令集
+
+将特定一组二进制数写到CPU某个位置，告诉计算机，这条指令应该做什么，比如：算术运算，读取地址等
 
 CPU主要看指令集，高级语言最终要转换成CPU指令然后执行，INTEL的是X86指令集
 

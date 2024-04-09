@@ -159,7 +159,7 @@ func (e *emptyCtx) String() string {
 
 好像也没什么，就是空实现了context 接口...
 
-emptyCtx: 没有超时时间，不能取消，也不能存储任何额外信息，所以 emptyCtx 用来作为context树的根节点。
+emptyCtx: 没有超时时间，不能取消，也不能存储任何额外信息，所以 emptyCtx 用来作为 context 树的根节点。
 
 ```go
 var (
@@ -176,12 +176,12 @@ func TODO() Context {
 }
 ```
 
-emptyCtx 并不会直接使用，GO提供了两个方法：background 和  todo 实例化 emptyCtx来使用
+emptyCtx 并不会直接使用，GO 提供了两个方法：background 和  todo 实例化 emptyCtx来使用
 
-1. Background：通常被用于主函数、初始化以及测试中，作为一个顶层的context，也就是说一般我们创建的context都是基于Background；
+1. Background：通常被用于主函数、初始化以及测试中，作为一个顶层的 context，也就是说一般我们创建的context都是基于Background；
 2. TODO：在不确定使用什么context的时候才会使用
 
-> 我是没搞懂有啥本质区别，想起学英语的时候用todo something 这种东西像是占位符....
+> 我是没搞懂有啥本质区别，想起学英语的时候用 todo something 这种东西像是占位符....
 
 接下来，看下context的3个具体实现类~
 
@@ -203,9 +203,9 @@ func (c *valueCtx) Value(key interface{}) interface{} {
 
 Context 是继承，另外还包含了两个变量：key val
 
-valueCtx-Value方法：覆写了父类的value方法
+valueCtx-Value方法：覆写了父类的 value 方法
 
-总结下：valueCtx 继承父类 context，同时可以有附带值（K/V），覆写了value方法  定。
+总结下：valueCtx 继承父类 context，同时可以有附带值（K/V），覆写了 value 方法  定。
 
 ## cancelCtx
 
@@ -298,7 +298,7 @@ func (c *cancelCtx) cancel(removeFromParent bool, err error) {
 
 ## WithCancel
 
-上面是： cancelCtx 类， 具体使用，得用WithCancel来创建
+上面是： cancelCtx 类， 具体使用，得用 WithCancel 来创建
 
 ```go
 type CancelFunc func()
@@ -361,7 +361,7 @@ func parentCancelCtx(parent Context) (*cancelCtx, bool) {
 }
 ```
 
-1. 创建一个CancelCtx
+1. 创建一个 CancelCtx
 2. propagateCancel：这个就是核心了，主要就是将新的节点，加到父节点的map中。
 
 总结：实现了将某个节点加到父节点上，父节点一但cancel，那么所有节点均退出。
@@ -450,7 +450,7 @@ WithDeadline ：也比较简单，基于 timerCtx 这上，根据 定时时间�
 
 ## WithDeadline
 
-父协程可取消的context
+父协程可取消的 context
 
 # 总结
 

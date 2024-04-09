@@ -265,7 +265,7 @@ typedef struct intset {
 ```
 
 encoding：INTSET_ENC_INT16  INTSET_ENC_INT32 INTSET_ENC_INT64
-contents：保存实际的情况，但它并不是真的 int8  取决 encoding 的值
+contents：保存实际的情况，但它并不是真的 int8  取决   的值
 
 很取巧的一个结构，可以保存 int8 int32 int 64
 

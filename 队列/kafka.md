@@ -174,7 +174,7 @@ kafka 里，一个 partition 最多对应一个 消费者。
 
 Consumer Group 也可以通配符式监听队列
 
-启动 consumer 没有指定group name ，系统会默认给生成一个组名
+启动 consumer 没有指定 group name ，系统会默认给生成一个组名
 
 假设：partition 有3个，而 consumer 只有一个，那么 该  partition 会同时接收3个 partition 的消息
 如果  consumer 有3个，那么 partition的3个分区会一对一指向  consumer

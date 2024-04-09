@@ -20,9 +20,9 @@ GO的异常错误机制：error defer panic recover
 程序运行中，发现错误，如：空指针。
 程序直接停止，报错
 
-捕捉方法：defer\+recover
+捕捉方法：defer + recover
 
-这东西它只有在当前调用函数内使用，且还得是同一协程，且还得必须用defer配合用。
+这东西它只有在当前调用函数内使用，且还得是同一协程，且还得必须用 defer 配合用。
 并不像 try catch ，在最上层监听一下，不管下面多少级的函数，只要出错，就直接能捕获。只需要写一次即可。
 
 简单说就是：但凡你认为程序可能出错的地方就得有个 defer+recover 函数
@@ -50,7 +50,7 @@ GO的异常错误机制：error defer panic recover
 >有点析构函数的意思
 
 
-recover 就得放在此函数内才生效，才能捕获panic
+recover 就得放在此函数内才生效，才能捕获 panic
 
 >这东西，看网上一堆面试题，感觉玩出花了~直接分析源码
 
@@ -147,7 +147,7 @@ type _defer struct {
 }
 ```
 
-当正常函数执行完，开始执行该 g 的 defer 列表中的 defer函数了，每个函数执行完后，就会走deferReturn
+当正常函数执行完，开始执行该 g 的 defer 列表中的 defer 函数了，每个函数执行完后，就会走deferReturn
 
 ```go
 
@@ -158,10 +158,10 @@ func deferreturn(arg0 uintptr) {
     return
   }
   ...
-  fn := d.fn // 获得defer的func函数
+  fn := d.fn // 获得 defer 的func函数
   d.fn = nil // 重置
-  gp._defer = d.link // 将前一个defer函数attach到当前goroutine
-  freedefer(d) // 释放defer函数
+  gp._defer = d.link // 将前一个defer函数 attach 到当前goroutine
+  freedefer(d) // 释放 defer 函数
   _ = fn.fn // 执行defer的func函数
   jmpdefer(fn, uintptr(unsafe.Pointer(&arg0)))
 ```
@@ -180,15 +180,15 @@ func deferreturn(arg0 uintptr) {
 3. 先保存 return 的值，到一个临时变量中
 4. 开始找 *\_defer  是否后面挂着值
 5. 如果有，就开始执行
-6. 执行完一个 defer 函数后，判断后来是否还有derver
+6. 执行完一个 defer 函数后，判断后来是否还有 defer
 7. 直到所有 derfer 函数执行完
 8. 把第3步保存的临时值，返回
 
 
 
-就是一个保存\<回调函数\>的链表（栈），该链表基于某个协程上。当函数执行return触发该链表的执行过程。return时defer执行顺序：后进先出
+就是一个保存\<回调函数\>的链表（栈），该链表基于某个协程上。当函数执行 return 触发该链表的执行过程。return时 defer 执行顺序：后进先出
 
-单说refer的原理很简单，但是配合其它语法及使用场景，就麻烦了。
+单说 refer 的原理很简单，但是配合其它语法及使用场景，就麻烦了。
 
 影响refer的X因素：
 
@@ -207,13 +207,13 @@ return:
 4. 检查是否有defer，如果有就执行
 5. 返回刚刚保存的临时变量
 
-我们发现defer居然是插在return执行过程中的一步，也就是说：return是非原子操作。而如果我们定义了返回值的变量名，且有defer，且在defer中更改了返回值，那么就挺危险。
+我们发现defer居然是插在return执行过程中的一步，也就是说：return是非原子操作。而如果我们定义了返回值的变量名，且有 defer，且在defer中更改了返回值，那么就挺危险。
 
 defer在一个函数中，可以定义N个。可以在任意位置定义。
 
 os.Exit:这是个无敌的东西，触发即立刻停止忽略一切，包括defer
 
-panic会触发defer，不然没法recover了
+panic 会触发 defer，不然没法recover了
 
 注意事项：
 

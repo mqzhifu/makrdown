@@ -63,18 +63,18 @@ http-UI-->函数栈统计火焰图
 
 > net/http/pprof 封装了一层 runtime/pprof 包
 
-触发pprof监听的3种条件：
+触发 pprof 监听的3种条件：
 
-1. 如果项目中已经有了http守护协程，引入 net/http/pprof包即可
-2. 如果项目中没有http守护协程
+1. 如果项目中已经有了 http 守护协程，引入 net/http/pprof 包即可
+2. 如果项目中没有 http 守护协程
     1. 引入 net/http/pprof
     2. 那得单独开一个http\(随便开\)
 3. 以上两荐均不具备
-    1. 引入runtime/pprof
+    1. 引入 runtime/pprof
     2. 代码中加函数，并指定监控的类型，统计数据输出文件位置
     3. 启动时加参数
 
-```
+```go
 f, err := os.Create(*cpuprofile)
     if err != nil {
         log.Fatal(err)
@@ -84,7 +84,7 @@ f, err := os.Create(*cpuprofile)
 }
 ```
 
-go run main.go \-\-cpuprofile=ppp.prof
+go run main.go --cpuprofile=ppp.prof
 
 > 对比下来， 还是第1种最简单，差一点的是第2种，第3种有点复杂
 
@@ -92,7 +92,7 @@ go run main.go \-\-cpuprofile=ppp.prof
 
 > 使用第1种最简单的方式
 
-```
+```go
 package main
 
 import (
@@ -123,7 +123,7 @@ func  wwwHandle(w http.ResponseWriter, r *http.Request){
 }
 ```
 
-> 代码中因为原本就使用到了http，所以没其它多余代码
+> 代码中因为原本就使用到了 http，所以没其它多余代码
 
 ## 采样数据
 
@@ -143,11 +143,11 @@ func  wwwHandle(w http.ResponseWriter, r *http.Request){
 
 full goroutine stack dump
 
-监控程序已经生效，接下来就是:采样源数据了：
+监控程序已经生效，接下来就是采样源数据了:
 
 1. http://127.0.0.1:10000/debug/pprof/
 2. go tool pprof http://localhost:6060/debug/pprof/profile?seconds=60
-3. 非http的runtime模式，因为在程序启动时并指定了采样类型及数据输出，所以这种方式先忽略
+3. 非 http 的 runtime 模式，因为在程序启动时并指定了采样类型及数据输出，所以这种方式先忽略
 
 http的2种方式对比：
 
@@ -171,7 +171,7 @@ http的2种方式对比：
 
 ps:可在指令行输出 help 查看这个分析工具的一些参数
 
-列出当前最吃CPU性能的前10项
+列出当前最吃 CPU 性能的前10项
 
 > top 10
 
@@ -269,12 +269,11 @@ UI的分类还是挺全的：
 
 ## trace
 
-pprof更多是汇总型分析，而更加详细的分析trace更适用些
+pprof 更多是汇总型分析，而更加详细的分析trace更适用些
 
 包：runtime/trace
 
-```
-
+```go
 import (
 	"fmt"
 	"net/http"

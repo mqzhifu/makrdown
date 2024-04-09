@@ -1,6 +1,6 @@
 # hashTable
 
-```
+```c
 typedef struct _hashtable { 
     uint nTableSize;        // hash Bucket的大小，最小为8，以2x增长。
     uint nTableMask;        // nTableSize-1， 掩码，用于根据hash值计算存储位置。
@@ -20,7 +20,7 @@ typedef struct _hashtable {
 } HashTable;
 ```
 
-```
+```c
 typedef struct bucket {
     /* Used for numeric indexing */
     ulong h;            // 对char *key进行hash后的值，数字索引的话就是索引值

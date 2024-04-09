@@ -21,7 +21,9 @@ https://raft.github.io/
 
 ## 术语
 
-## 任期\(term\)：每个 leader 从竞选开始\-\>成功到最后放弃\(宕机\)，被称为一个 term 任期，也可以理解为一次 leader 的执政周期
+#### 任期(term)
+
+每个 leader 从竞选开始->成功到最后放弃(宕机)，被称为一个 term 任期，也可以理解为一次 leader 的执政周期
 
 | 模块名          | 说明                 |
 | --------------- | -------------------- |
@@ -55,7 +57,7 @@ type RequestVoteRes struct{
 
 1. AppendEntries 消息体:只能由 leader 发起，日志追回请求，包括：执行日志复制、心跳、日志对齐
 
-```
+```go
 type AppendEntriesReq struct {
 	Term         int    //当前任期号
 	LeaderId     int    //自己的leaderId
@@ -83,7 +85,7 @@ type AppendEntriesRes struct {
 1. 所有机器首次启动，均为 follower 状态
 2. 创建心跳定时器\(时间为随时\)，如在 timer 周期内未收到任何\(leader \+ candidate \)消息，开启选举过程：
    1. 状态变更： follower =\> candidate
-   2. 读取本地属性： currentTermNumber，然后： term\+1
+   2. 读取本地属性： currentTermNumber，然后： term+1
    3. 读取本地日志最大索引号：last_index_id
    4. 设置：自己的 ID 为被投票者（间接看：自己投自己一票 ）
    5. 将：currentTermNumber last_index_id term\+1 candidateId ，打包 RequestVoteReq，发送：RequestVote RPC 消息

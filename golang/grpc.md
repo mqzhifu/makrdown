@@ -129,11 +129,11 @@ message MyHeader {
 
 > protoc \-I helloworld/ helloworld/helloworld.proto \-\-go\_out=plugins=grpc:helloworld
 
-高版本protoc 方法
+高版本 protoc 方法
 
 > protoc \-\-go\-grpc\_out=./pb ./proto/demo.proto
 
-旧版本protoc 方法\(因为我的ETCD只能用grpc旧版，protoc也得跟着降版本\)
+旧版本 protoc 方法\(因为我的ETCD只能用grpc旧版，protoc也得跟着降版本\)
 
 > protoc \-\-go\_out=plugins=grpc:. ./proto/demo.proto
 
@@ -180,7 +180,7 @@ demo的方式，有些问题需要思考：
 解决办法：
 
 1. 写个脚本，去分析.proto文件，帮忙生成相关类名\+函数名
-2. 使用metadata透传值，毕竟是HTTP2.0，肯定有header
+2. 使用 metadata 透传值，毕竟是HTTP2.0，肯定有header
 3. 第1条里的，加入公共代码
 4. \(1\) 可以自己写，但牵涉到动态路由，有点麻烦呢。
     \(2\) c/s端增加拦截器
