@@ -1,7 +1,7 @@
 
 # 概览
 
-AMQP（advanced message queuing protocol）
+AMQP 协议（advanced message queuing protocol）
 
 
 ![[rabbitmq-概览.png]]
