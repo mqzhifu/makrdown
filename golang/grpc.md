@@ -2,7 +2,7 @@
 
 ## 概要
 
-Remote Procedure Protocol:远程调用协议，A机器上的代码，通过函数调用B机器上的函数。应用于分布式。
+Remote Procedure Protocol：远程调用协议，A机器上的代码，通过函数调用B机器上的函数。应用于分布式。
 
 Google Remote Procedure Protocol ：谷歌出口的一个RPC框架
 

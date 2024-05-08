@@ -86,7 +86,12 @@ f, err := os.Create(*cpuprofile)
 
 go run main.go --cpuprofile=ppp.prof
 
-> 对比下来， 还是第1种最简单，差一点的是第2种，第3种有点复杂
+
+#### 对比
+
+- 第1种最简单，但只能用最原生HTTP监听的写法，如果使用GIN有冲突
+- 第2种，略复杂一点点，但相对独立，可定义单独的端口号
+- 第3种有点复杂
 
 ## demo
 
@@ -122,6 +127,10 @@ func  wwwHandle(w http.ResponseWriter, r *http.Request){
 
 }
 ```
+
+打开浏览器 ：
+>http://127.0.0.1:10000/debug/pprof/
+
 
 > 代码中因为原本就使用到了 http，所以没其它多余代码
 
@@ -203,7 +212,7 @@ ps:可在指令行输出 help 查看这个分析工具的一些参数
          
 ```
 
-神奇不？像不像GDB？只能说，被PHP惯坏了....
+神奇不？像不像GDB？只能说，被 PHP 惯坏了....
 
 ## 生成图片/PDF/TEXT
 

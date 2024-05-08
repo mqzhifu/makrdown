@@ -14,7 +14,7 @@ GO的异常错误机制：error defer panic recover
 优点：程序员永远手动处理，手动解决，都是已知的
 缺点：程序员大师充斥着类似的判断，很恶心人
 
-## panic
+# panic
 
 
 程序运行中，发现错误，如：空指针。
@@ -30,7 +30,7 @@ GO的异常错误机制：error defer panic recover
 
 所以 ，只要项目大一点，可能到处都是这种鬼东西。
 
-## fatal
+# fatal
 
 跟 panic 差不多，直接叫停程序，但不能捕获
 >这个真是反人类中的反人类
@@ -44,17 +44,13 @@ GO的异常错误机制：error defer panic recover
 7. found bad pointer in Go heap
 8. signal SIGSEGV: segmentation violation
 
-## defer\(\)
+# defer
 
 延迟函数/析构函数：函数执行完毕 ，会自动执行此函数
->有点析构函数的意思
 
+>recover 放在此 defer 函数内才生效，才能捕获 panic
 
-recover 就得放在此函数内才生效，才能捕获 panic
-
->这东西，看网上一堆面试题，感觉玩出花了~直接分析源码
-
-主结构体：
+#### 源码分析
 
 ```
 type _defer struct {
@@ -78,14 +74,14 @@ defer 为关键词，最终被解释成一个函数：runtime.deferproc
 
 ```go
 func deferproc(siz int32, fn *funcval) { // arguments of fn follow fn
-    //用户goroutine才能使用defer
+    //用户 goroutine 才能使用defer
     if getg().m.curg != getg() {
         // go code on the system stack can't defer
         throw("defer on system stack")
     }
-    //也就是调用deferproc之前的rsp寄存器的值
+    //也就是调用 deferproc 之前的 rs p寄存器的值
     sp := getcallersp()
-    // argp指向defer函数的第一个参数
+    // argp 指向 defe r函数的第一个参数
     argp := uintptr(unsafe.Pointer(&fn)) + unsafe.Sizeof(fn)
     // 存储的是 caller 中，call deferproc 的下一条指令的地址
     // deferproc函数的返回地址
@@ -103,13 +99,13 @@ func deferproc(siz int32, fn *funcval) { // arguments of fn follow fn
     //调用deferproc之前rsp寄存器的值
     d.sp = sp
     switch siz {
-    case 0:
-        // Do nothing.
-    case sys.PtrSize:
-        *(*uintptr)(deferArgs(d)) = *(*uintptr)(unsafe.Pointer(argp))
-    default:
-        //通过memmove拷贝defered函数的参数
-        memmove(deferArgs(d), unsafe.Pointer(argp), uintptr(siz))
+	    case 0:
+	        // Do nothing.
+	    case sys.PtrSize:
+	        *(*uintptr)(deferArgs(d)) = *(*uintptr)(unsafe.Pointer(argp))
+	    default:
+	        //通过memmove拷贝defered函数的参数
+	        memmove(deferArgs(d), unsafe.Pointer(argp), uintptr(siz))
     }
 
     // deferproc通常都会返回0
@@ -117,16 +113,21 @@ func deferproc(siz int32, fn *funcval) { // arguments of fn follow fn
 }
 ```
 
-原理：保存返回地址等等，但它的核心是 newdefer
+原理：
+- 原函数的返回地址
+- defer 函数的参数
+- 下一个 defer 函数的入口地址
+- 栈的地址，堆的初始化
+- .......
 
 
 ```go
 func newdefer(siz int32) *_defer {
   var d *_defer
   sc := deferclass(uintptr(siz))
-  gp := getg() // 获得当前的goroutine
+  gp := getg() // 获得当前的 goroutine
   ...
-  d.link = gp._defer // 现在新的defer函数的link指向了当前的defer函数
+  d.link = gp._defer // 现在新的 defer 函数的link指向了当前的defer函数
   gp._defer = d // 新的defer函数现在是第一个被调用的函数了
   return d
 }
@@ -178,8 +179,8 @@ func deferreturn(arg0 uintptr) {
 1. G 结构体中，有一个成员变量：* \_defer
 2. 当一个函数正常执行完毕，到 return 时
 3. 先保存 return 的值，到一个临时变量中
-4. 开始找 *\_defer  是否后面挂着值
-5. 如果有，就开始执行
+4. 开始找 G的成员变量：  \_defer
+5. 如果有，就开始执行  \_defer 对应的函数
 6. 执行完一个 defer 函数后，判断后来是否还有 defer
 7. 直到所有 derfer 函数执行完
 8. 把第3步保存的临时值，返回
@@ -188,34 +189,76 @@ func deferreturn(arg0 uintptr) {
 
 就是一个保存\<回调函数\>的链表（栈），该链表基于某个协程上。当函数执行 return 触发该链表的执行过程。return时 defer 执行顺序：后进先出
 
-单说 refer 的原理很简单，但是配合其它语法及使用场景，就麻烦了。
-
-影响refer的X因素：
-
-1. return
-2. os.exit
-3. panic
-4. fatal
-
-return:
-
-原理：
-
-1. 是否有返回值
-2. 如果有返回值，判断是否函数尾部已给返回值定义了变量名
-3. 如果未定义，新创建一个临时变量ret，再将返回值保存于ret中
-4. 检查是否有defer，如果有就执行
-5. 返回刚刚保存的临时变量
-
-我们发现defer居然是插在return执行过程中的一步，也就是说：return是非原子操作。而如果我们定义了返回值的变量名，且有 defer，且在defer中更改了返回值，那么就挺危险。
 
 defer在一个函数中，可以定义N个。可以在任意位置定义。
+当一个当时定义了多个 defer 函数，执行顺序：后进行出
 
-os.Exit:这是个无敌的东西，触发即立刻停止忽略一切，包括defer
 
-panic 会触发 defer，不然没法recover了
+单说 defer 的原理很简单，但是配合其它语法及使用场景，就麻烦了。
 
-注意事项：
+#### defer 与 return
+
+return：
+1. return 没有返回值，直接执行 defer 函数，比较简单
+2. return 有返回值，但返回值没有定义变量名，都是些简单类型的值，新创建一个临时变量 ret，再将返回值保存于ret中
+>注：返回值变量是指，函数的返回值的变量，如：func a ()(err errors,i int)
+4. return 有返回值，并且返回值定义了变量名，会把此变量的指针地址传进 defer 函数
+5. 检查是否有 defer，如果有就执行
+6. 返回刚刚保存的临时变量
+
+defer 居然是插在 return 执行过程中的一步。也就是说：return 是非原子操作：
+- 保存 返回值
+- 执行 defer
+- 返回数据
+
+>这里其实多了一步：执行 defer
+
+实际例子：
+
+```go
+func test1() int {
+	i := 1
+	defer func() {   // 实际则是将局部变量i的地址指针传入，调用runtime.deferproc函数
+		i++
+	}()
+	return i     // 将i的值拷贝到调用栈的返回值上
+}
+
+func test2() int {
+	i := 1
+	defer func(i int) {  // 将i的值拷贝一份传入,调用runtime.deferproc函数
+		i++
+	}(i)
+	return i
+}
+
+func test3() (i int) { // 提前声明了返回值i
+	i = 1
+	defer func() { // 将返回值i的地址指针传入,调用runtime.deferproc函数
+		i++
+	}()
+	return i  // 直接将值赋给调用栈的返回值上
+}
+```
+
+简单说：defer 函数内部，使用了外部的变量。
+如果是：值传递，正常。如果是地址传递，肯定会影响函数外面的变量。
+这里  test3 定义了变量：i ，传给了 defer 就是地址传递。
+
+#### defer 与 os.Exit
+
+这是个无敌的东西，触发即立刻停止忽略一切，包括 defer
+
+#### defer 与 panic
+
+会触发 defer，且会所有 defer 函数均执行完，最后向外部程序报 panic
+但在，执行 defer 过程中，遇到  recover ，那么，panic 消失。但后续的 defer 都是正常执行的
+
+#### defer 与 fatal
+
+一样，这个跟  exit 差不多，程序直接停止，defer 不会执行 recover 也捕获不到
+
+#### 注意事项：
 
 1. 变量作用域|影响了返回值
     地址|引用
@@ -230,3 +273,18 @@ panic 会触发 defer，不然没法recover了
 1. lock/unlock
 2. openFD/closeFD
 3. 发生了运行时异常，容错处理
+
+#### 异常捕获
+
+- error  这个没太大影响
+- panic 可以使用 defer 捕获
+- fatal  无法捕获
+# 总结
+
+golang 并没有 try catch 这套东西，千万别把概念弄混了
+defer 这东西有点复杂，最好做到：
+- 不要引用外部变量，尤其是：返回值
+- 只做一些收尾的工作，不要弄的太复杂
+- 不要定义太多 defer  函数
+- 只获取  panic
+- 不要再开 子协程

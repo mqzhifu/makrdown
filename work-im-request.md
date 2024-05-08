@@ -68,7 +68,10 @@ curl -X POST -H 'dapr-app-id:core' -H "Content-type: application/json" -H 'X-Tok
 
 查询组
 
-curl -X POST -H 'dapr-app-id:core' -H "Content-type: application/json;charset=utf-8" -H 'X-Token: CH0QAxgBIO0GKJDPwqrvMQ.ECw9ECmi32CDsl1I3INVUl-mscKMZW5hpziyCnnqLlcILmP1RvehBmn4lSH6f4NNEaj-BVCYm4Nz5GtKj_JbCQ' -d '{"offset":1,"limit":5,"name":"","id":360}'  http://127.0.0.1:8887/v1/tenant/worker-group/query
+curl -X POST -H 'dapr-app-id:core' -H "Content-type: application/json;charset=utf-8" -H 'X-Token: CAEQAxgBILoBKITQuIbwMQ.rFCnW6zYQig51jOYpvRbnEx9DUf28yNGCNes5JVw7rToGkEjSZctLP2csJoz8NxFDdjuB3EtyOxTGkOVdYTlBw' -d '{"group_child_id":1,"group_id":0,"batch":{"offset":1,"limit":5}}'  http://127.0.0.1:8887/v1/tenant/worker-group/query
+
+查询入口：
+curl -X POST -H 'dapr-app-id:core' -H "Content-type: application/json;charset=utf-8" -H 'X-Token: CAEQAxgBILoBKITQuIbwMQ.rFCnW6zYQig51jOYpvRbnEx9DUf28yNGCNes5JVw7rToGkEjSZctLP2csJoz8NxFDdjuB3EtyOxTGkOVdYTlBw' -d '{"group_child_id":1,"page":1,"limit":5}'  http://127.0.0.1:8887/v1/tenant/entrance/query-entrance
 
  
 

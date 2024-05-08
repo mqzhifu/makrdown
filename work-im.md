@@ -8,12 +8,16 @@ git 地址:
 ```
 https://repo.xdev.stream/CustomerService/wcs
 nash_go 
-mqzhifu
+mqzhifu123
 ```
 
 
 git  分支 ：
->N7Q_master
+```
+feature/nash_N7Q_master
+N7Q_master
+```
+
 
 产品需求
 https://y9wbg2.axshare.com/#id=gfrm3i&p=%E5%90%8D%E8%AF%8D%E8%A7%A3%E9%87%8A&g=1
@@ -44,6 +48,12 @@ vi /e/project/tg/wcs/docs/db/.env_db.sh
 DAPR_WORKDIR_WIN=${DAPR_WORKDIR//\//\/\/}
 winpty
 sed -i 's/\r//' $tmp_file
+
+wsl --update
+netsh winsock reset
+
+netsh int ipv4 show dynamicport tcp
+netsh int ipv4 set dynamicport tcp start=9000 num=10000
 
 ```
 

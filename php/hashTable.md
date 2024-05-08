@@ -24,17 +24,17 @@ typedef struct _hashtable {
 } HashTable;
 ```
 
-| key | value |  |
-|:---|:---|:---|
-| nTableSize | hash Bucket的大小，最小为8，以 2x 增长 |  |
-| nTableMask | nTableSize-1， 掩码，用于根据hash值计算存储位置 |  |
-| nNumOfElements | hash Bucket 中当前存在的元素个数 | count 函数使用 |
-| nNextFreeElement | 指向下一个空的元素位置 | foreach比for快的原因之一 |
-| pInternalPointer | 当前遍历的指针 |  |
-| pListHead | 存储数组头元素指针 |  |
-| pListTail | 存储数组尾元素指针 |  |
-| arBuckets | 存储 hash 数组 | 数组-保证线性顺序 |
-|  |  |  |  
+| key              | value                            |                   |     |
+| :--------------- | :------------------------------- | :---------------- | --- |
+| nTableSize       | hash Bucket的大小，最小为8，以 2x 增长      |                   |     |
+| nTableMask       | nTableSize-1， 掩码，用于根据hash值计算存储位置 |                   |     |
+| nNumOfElements   | hash Bucket 中当前存在的元素个数           | count 函数使用        |     |
+| nNextFreeElement | 指向下一个空的元素位置                      | foreach比for快的原因之一 |     |
+| pInternalPointer | 当前遍历的指针                          |                   |     |
+| pListHead        | 存储数组头元素指针                        |                   |     |
+| pListTail        | 存储数组尾元素指针                        |                   |     |
+| arBuckets        | 存储 hash 数组                       | 数组-保证线性顺序         |     |
+|                  |                                  |                   |     |
 #### bucket
 
 ```c
