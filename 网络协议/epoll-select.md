@@ -31,7 +31,7 @@ int select(int maxfdp,fd_set *readfds,fd_set *writefds,fd_set *errorfds,struct t
 
 函数分析，告诉内核：我有3个文件 FD 集合
 
-1. 最大的FD
+1. 最大的 FD
 2. 读操作
 3. 写操作
 4. 异常操作
@@ -87,7 +87,7 @@ while(1)
 
 ![[socket_select.jpg]]
 
-当网卡收到数据后，给CPU发中断信号。然后，找到某个 socket 后，会唤醒此进程，但仅仅是唤醒，并不告诉具体是：读、写
+当网卡收到数据后，给 CPU 发中断信号。然后，找到某个 socket 后，会唤醒此进程，但仅仅是唤醒，并不告诉具体是：读、写
 而进程被唤醒后，不知道是读还是写，还需要重复遍历整个集合。
 
 另外，select 函数在执行时，要把集合 从用户态复制到内核态。 当 select 结束后，有数据来，还要把集合从内核态复制到用户态

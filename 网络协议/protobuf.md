@@ -27,7 +27,7 @@
 
 ![[protobuf_tag.png]]
 
-每个字段占一部分，而每个部分又被分成了 3 个子部分\(TLV\(tag\-length\-value\) \)，其实 TAG 子部分又被划分成了：两个子子部分：field_number\+wite_type
+每个字段占一部分 TLV，而每个部分又被分成了 3 个子部分(tag-length-value)，其实 TAG 子部分又被划分成了：两个子子部分：field_number+wite_type
 
 # 数据类型
 

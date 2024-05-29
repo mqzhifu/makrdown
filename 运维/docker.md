@@ -256,8 +256,6 @@ dockerfile:比commit更灵活，可以跨机器部署，又比import方式轻，
 假设 /data/myproject1 下是项目代码，现在要启动
 
 > touch dockerfile.one
-> 
-> 
 > vim dockerfile.one
 
 ```
@@ -359,11 +357,7 @@ doing something
 需求：两个容器，1 nginx 2 php ,实现 http 请求 a.php 能正常显示
 
 > docker search nginx
-> 
-> 
 > docker pull nginx
-> 
-> 
 > docker images
 
 启动/创建 nginx

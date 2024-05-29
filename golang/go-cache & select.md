@@ -89,7 +89,7 @@ go-cache 原本就是单机/本机的，语言内部自己的缓存机制，但�
 我是觉得，GO-CACHE 挺鸡肋的
 
 
-#### go-cache与map sync.map 区别
+#### go-cache 与 map sync.map 区别
 
 我是实在想不出：为毛要搞个GO-CACHE，sync.map 也是线程安全，且性能要更高。go-cache 只是多了一个定期功能，但一定要有这个功能嘛？自己删除不行嘛？我更倾向使用 使用 sync.map
 

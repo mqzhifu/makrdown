@@ -265,7 +265,8 @@ typedef struct intset {
 ```
 
 encoding：INTSET_ENC_INT16  INTSET_ENC_INT32 INTSET_ENC_INT64
-contents：保存实际的情况，但它并不是真的 int8  取决   的值
+contents：保存实际的数据，但它并不是真的 int8  取决   的值
+length：保存数据的总个数
 
 很取巧的一个结构，可以保存 int8 int32 int64
 
@@ -335,7 +336,7 @@ typedef struct zskiplistNode {
 
 # ListPack
 
-5.0新出的一个结构体，是对 zipList 的优化，6.0开始部分被替换成了 ListPack
+5.0新出的一个结构体，是对 zipList 的优化，6.0 开始部分被替换成了 ListPack
 
 
 ```php
@@ -386,13 +387,13 @@ value --> string_list_hash_....
 # 基础数据结构
 
 
-| 名称         | 分类                                | 底层结构                |
-| ---------- | --------------------------------- | ------------------- |
-| String     | 最简单的结构类型，可以存在任何数据：字符、数字、二进制       | SDS                 |
-| List       | 类似一个队列吧，有顺序的插入元素，元素值可以重复，可以是字符/数字 | quickList           |
-| Set        | 集合，字符/数字都能存，但不允许重复。               | intset hashTable    |
-| Sorted Set | 集合，字符/数字都能存，有序的，但不允许重复。           | zipList + skipTable |
-| Hash       | 就是普通的字典/hashTable                 | zipList + hashTable |
+| 名称         | 分类                                | 底层结构                |                    |
+| ---------- | --------------------------------- | ------------------- | ------------------ |
+| String     | 最简单的结构类型，可以存在任何数据：字符、数字、二进制       | SDS                 |                    |
+| List       | 类似一个队列吧，有顺序的插入元素，元素值可以重复，可以是字符/数字 | quickList           | 做范围查询，首尾元素追加/删除    |
+| Set        | 集合，字符/数字都能存，但不允许重复。               | intset hashTable    | 适合随机操作，如某个值的 删除 修改 |
+| Sorted Set | 集合，字符/数字都能存，有序的，但不允许重复。           | zipList + skipTable | 做范围查询，有排序规则        |
+| Hash       | 就是普通的字典/hashTable                 | zipList + hashTable |                    |
 
 ## string
 

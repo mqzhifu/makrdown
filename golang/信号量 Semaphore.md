@@ -6,6 +6,12 @@
 官方的解释：给每一个进程一个信号量，代表每个进程当前的状态，未得到控制权的进程，会在特定的地方被迫停下来，等待可以继续进行的信号到来。
 
 
+# 注意
+
+golang 中 Semaphore 是底层使用，并没有直接的API给程序员使用。
+
+但，golang 官方给了一个扩展包：golang.org/x/sync v0.7.0，可以下载，使用与学习
+
 # Semaphore
 
 #### 创建一个信号量容器：
@@ -161,7 +167,8 @@ GO自己实现了一套类似  sleep/wakeup 机制（进程/线程并发读写�
 #  golang 内部机制
 
 
-Semaphore 包，是可以直接给程序员使用的，但其内部的实现 golang 还有一套详细的规则
+Semaphore 包，是不开放给程序员使用的。可以使用的 Semaphore 包是 sync 下面的，
+GOLANG 其内部的实现还有一套详细的规则
 
 runtime 内部定义了一个大小为 251 的全局变量 semtable 数组，来管理所有的 Semaphore。
 ```go
@@ -173,6 +180,7 @@ var semtable [semTabSize] struct {
 }
 ```
 
+> semTabSize : goroutine ID
 
 semaRoot 就是一个节点，也算是树的开头结点，由此节点，可以找到下一个节点，即：
 每 semtable 都包含一颗 树
@@ -212,3 +220,17 @@ type sudog struct {
 }
 
 ```
+
+
+分析大体逻辑：
+- 当有多个 G  并发访问某一个资源时，同一时间只能有一个 G 获取到，未获取到的 G 进入阻塞状态。
+- gopark()
+- 阻塞状态的 G ，会修改当前状态，将创建一个 sudog 结构，与 G关联
+- sudog 会被添加到 semtable 中
+- 等某个 G 释放了资源，会人 semtable  找一个等待的 G
+- goread() ，等待 P 重新调度 执行
+
+分析：就是当出现多个 G 访问一个资源时，对 G 进行睡眠与阻塞。
+
+
+sudog 像是：对 G 的又一层封装

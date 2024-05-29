@@ -10,6 +10,7 @@ AMQP 协议（advanced message queuing protocol）
 
 
 
+
 | key | value |
 |:---|:---|
 | Virtual host | 类似namespace，一个实例上，为不同业务划分不同的实例范围  |
@@ -24,19 +25,19 @@ AMQP 协议（advanced message queuing protocol）
  
 # Exchange
 
-消息队列交换机，消息发送到RabbitMQ中后，会首先进入一个交换机，然后由交换机负责将数据转发到不同的队列中
+消息队列交换机，消息发送到 RabbitMQ 中后，会首先进入一个交换机，然后由交换机负责将数据转发到不同的队列中
 
 #### arguments
 
-| key | value |
-|:---|:---|
-| alternate  exchange | 备份交换器。存储：没有绑定队列或者没有routkey匹配 |
-| auto  delete | 当所有绑定队列都不在使用时，是否自动删除交换器 |
-| type | direct fanout topic header |
-| internal | exchange to exchange |
-| durable | 是持久的，重启  broker 还存在  |
-| transient | 是暂存的，重启  broker 没有了 |
-|  |  |  
+| key                 | value                          |     |
+| :------------------ | :----------------------------- | --- |
+| alternate  exchange | 备份交换器。存储：没有绑定队列或者没有 routkey 匹配 |     |
+| auto  delete        | 当所有绑定队列都不在使用时，是否自动删除交换器        |     |
+| type                | direct fanout topic header     |     |
+| internal            | exchange to exchange           |     |
+| durable             | 是持久的，重启  broker 还存在            |     |
+| transient           | 是暂存的，重启  broker 没有了            |     |
+|                     |                                |     |
 
 #### direct
 
@@ -50,7 +51,7 @@ AMQP 协议（advanced message queuing protocol）
 
 #### topic
 
-必须要配置一个RountingKey，RountingKey：由字符组成，通过dots（也就是 . ）来进行分割，也可以设置通配符
+必须要配置一个 RountingKey，RountingKey：由字符组成，通过dots（也就是 . ）来进行分割，也可以设置通配符
 
 #### header
 
@@ -87,14 +88,14 @@ x-match”，这个键的 Value 可以是any或者all
 
 #### 死信队列/死信 exchange
 
-消息：TTL失效、队列消息满了，消费者拒绝消费此消息，会进入死信队列。
-投递消息： routing key匹配失败， exchange 设置了死信 exchange 
+消息：TTL 失效、队列消息满了，消费者拒绝消费此消息，会进入死信队列。
+投递消息： routing key 匹配失败， exchange 设置了死信 exchange 
 
 
 有些人，把死信队列做成了 延迟队列。比如：把 x-message-ttl 设置的非常低
 虽然也能实现延迟这个功能，但感觉不是这么用的，最好是用它官方的延迟插件
 
->但RabbitMq只会检查第一个消息是否过期
+>但 RabbitMq 只会检查第一个消息是否过期
 
 # 绑定
 
@@ -109,7 +110,7 @@ exchang binding queue
 # 消息回执
 
 
-消费者拿到一条消息后，需要告知S端状态
+消费者拿到一条消息后，需要告知 S 端状态
 
 
 #### 模式：
@@ -160,7 +161,7 @@ Exhange、Queue、Msg 都要做持久化
 关闭 auto-delete  exclusive  x-expire msg-ttl 
 #### 投递
 
-生产者在发送消息时，要采用  publish_confirm 模式，也可以开启事务模式，要接收S端的应答
+生产者在发送消息时，要采用  publish_confirm 模式，也可以开启事务模式，要接收 S 端的应答
 
 #### 消费者
 

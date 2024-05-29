@@ -4,13 +4,13 @@
 
 
 #### 对比 DBMS
-|dbms |Cassandra|
-|---|---|
-|Database|Keyspace|
-|Table|CF(column family)|
-|Primary Key|Primary Key|
-|Column Name|Key / Column Name|
-|Column Value|Column Value|
+| dbms         | Cassandra         |
+| ------------ | ----------------- |
+| Database     | Keyspace          |
+| Table        | CF(column family) |
+| Primary Key  | Primary Key       |
+| Column Name  | Key / Column Name |
+| Column Value | Column Value      |
 
 
 类似于 java 的 map 结构：
@@ -20,16 +20,17 @@ Map<RowKey, SortedMap<ColumnKey, ColumnValue>>
 
 #### 字段类型-数值：
 
-|  |  |
-|:---|:---|
-| int | 32位有符号整型，和Java中的int类似； |
-| bigint | 64位长整型，和Java中的long类似； |
-| smallint | 16位有符号整型，和Java中的short类似，Apache Cassandra 2.2开始引入； |
-| tinyint | 8位有符号整型，和Java中的tinyint类似，Apache Cassandra 2.2开始引入； |
-| varint | 可变精度有符号整数，和Java中的java.math.BigInteger类似； |
-| float | 32位IEEE-754浮点型，和Java中的float类似； |
-| double | 64位IEEE-754浮点型，和Java中的double类似； |
-| decimal | 可变精度的decimal，和Java中的java.math.BigDecimal类似。 |  
+|          |                                                    |     |
+| :------- | :------------------------------------------------- | --- |
+| int      | 32位有符号整型，和Java中的int类似；                             |     |
+| bigint   | 64位长整型，和Java中的long类似；                              |     |
+| smallint | 16位有符号整型，和Java中的short类似，Apache Cassandra 2.2开始引入；  |     |
+| tinyint  | 8位有符号整型，和Java中的tinyint类似，Apache Cassandra 2.2开始引入； |     |
+| varint   | 可变精度有符号整数，和Java中的java.math.BigInteger类似；           |     |
+| float    | 32位IEEE-754浮点型，和Java中的float类似；                     |     |
+| double   | 64位IEEE-754浮点型，和Java中的double类似；                    |     |
+| decimal  | 可变精度的decimal，和Java中的java.math.BigDecimal类似。        |     |
+|          |                                                    |     |
 
 #### 字段类型-文本：
 
@@ -98,11 +99,11 @@ LSM模型：LevelDB，HBase，Google BigTable，Cassandra，InfluxDB
 
 # 写入流程
 
-|  |  |  |
-|:---|:---|:---|
-| CommitLog | 写入数据时，先写到这里 |  |
-| Memtable |  CommitLog 写入成功后，会加载到 Memtable 中 |  |
-| SSTable | Memtable 到达一定阀值后，会落盘。同时，删除 CommitLog 记录 |  |  
+|           |                                         |     |     |
+| :-------- | :-------------------------------------- | :-- | --- |
+| CommitLog | 写入数据时，先写到这里                             |     |     |
+| Memtable  | CommitLog 写入成功后，会加载到 Memtable 中         |     |     |
+| SSTable   | Memtable 到达一定阀值后，会落盘。同时，删除 CommitLog 记录 |     |     |
 
 ![[cassandra-写流程.jpg]]
 
@@ -132,16 +133,16 @@ CommitLog 写入成功后，会写入到内存中
 内存中，kv 形式，顺序写入
 
 触发 flush :
-- 达到memtable的flush阈值时
+- 达到 memtable 的 flush阈值时
 - 系统关机时
-- 执行nodetool flush或nodetool drain命令时。
+- 执行 nodetool flush或nodetool drain命令时。
 - commit log已满时
 
 # SSTable
 
 Sorted Strings Table，每一个 column family 都会对应：至少一个SSTable文件。
 
-Data.db：存储数据，按照key排序后存储key/value键值字符串。
+Data.db：存储数据，按照 key 排序后存储key/value键值字符串。
 index.db：索引文件，保存的是每个key在数据文件中的偏移位置
 Filter.db：Bloom Filter 映射文件。SSTable一旦完成写入，就不可变更，即为immutable。
 

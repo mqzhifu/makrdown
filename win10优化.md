@@ -4,18 +4,20 @@
 
 ##### win + r
 
-| 关键字 | 描述 |
-|:---|:---|
-| cmd | 打开指令行 |
-| gpedit |  |
-| calc |计算器  |
-| msconfig | 启动项相关 |
-| appwiz.cpl | 安装程序 |
-|control  | 控制面板 |
-| diskmgmt.msc | 磁盘管理 |
-| devmgmt.msc | 设备管理器 |
-| sysdm.cpl | 系统属性-环境变量 |
+| 关键字          | 描述        |
+| :----------- | :-------- |
+| cmd          | 打开指令行     |
+| gpedit       |           |
+| calc         | 计算器       |
+| msconfig     | 启动项相关     |
+| appwiz.cpl   | 安装程序      |
+| control      | 控制面板      |
+| diskmgmt.msc | 磁盘管理      |
+| devmgmt.msc  | 设备管理器     |
+| sysdm.cpl    | 系统属性-环境变量 |
+| dxdiag       |           |
 
+win10如何优化？
 
 
 
@@ -109,6 +111,10 @@ chome浏览器
 
 regedit:
 
+
+HKEY_LOCAL_MACHINE - SOFTWARE\Microsoft - Windows\CurrentVersion - Explorer - MyComputer - NameSpace
+
+
 HKEY_LOCAL_MACHINE
 |-SOFTWARE
 |-WOW6432Node
@@ -135,7 +141,11 @@ HKEY_LOCAL_MACHINE
 
 # 删除左侧  one drive:
 
-1 . 程序 -> 卸载 -> one drive 
-2. regedit -> 018D5C66-4533-4307-9B53-224DE2ED1FE6 -> System.IsPinnedToNameSpaceTree -> 1 变 0
+win + i：程序 -> 卸载 -> one drive 
+
+
+regedit -> HKEY_CLASSES_ROOT -> CLSID
+
+ 018D5C66-4533-4307-9B53-224DE2ED1FE6 -> System.IsPinnedToNameSpaceTree -> 1 变 0
 
 

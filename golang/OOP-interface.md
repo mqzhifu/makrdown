@@ -22,7 +22,7 @@ type Rabbit struct {
 
 Rabbit 结构 继承了 Animal 结构
 
-同时Rabbit 和 Animal 还共有一个相同名称的成员变量：Category，且互不影响...
+同时 Rabbit 和 Animal 还共有一个相同名称的成员变量：Category，且互不影响...
 
 >rabbit.Category
 >rabbit.Animal.Category
@@ -148,20 +148,52 @@ func PPP(x ...interface{})
 
 #### 类型
 
+interface 在运行时才会知道类型
+
 1. interface 为空
 2. interface 包含若干方法
 
 runtime.iface：带方法的接口
-runtime.eface：表示不带任何方法的空接口interface{}。
+runtime.eface：表示不带任何方法的空接口 interface{}
+
+>这里主要讲，空 interface
 
 
 ```go
+// $GOROOT/src/runtime/runtime2.go
 type eface struct { // 16 字节
 	_type *_type
 	data  unsafe.Pointer
 }
 ```
 
+
+
+```go
+//src/runtime/type.go
+type _type struct {
+	size       uintptr
+	ptrdata    uintptr // size of memory prefix holding all pointers
+	hash       uint32
+	tflag      tflag
+	align      uint8
+	fieldAlign uint8
+	kind       uint8
+	// function for comparing objects of this type
+	// (ptr to object A, ptr to object B) -> ==?
+	equal func(unsafe.Pointer, unsafe.Pointer) bool
+	// gcdata stores the GC type data for the garbage collector.
+	// If the KindGCProg bit is set in kind, gcdata is a GC program.
+	// Otherwise it is a ptrmask bitmap. See mbitmap.go for details.
+	gcdata    *byte
+	str       nameOff
+	ptrToThis typeOff
+}
+
+```
+
+
+一个空 interface ：只有当  type data 都等于0时，才等于 nil
 
 a := interface{}
 

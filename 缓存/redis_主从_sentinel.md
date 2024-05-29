@@ -1,6 +1,12 @@
 # 概览
 
-Redis 支持三种集群模式，分别为主从模式、哨兵模式和Cluster模式。
+Redis 支持三种集群模式：主从模式、哨兵模式和Cluster模式
+主从模式：最简单
+哨兵模式：单独再开一组进程，用来监控主从模式
+- 监听主节点状态
+- 发送报警通知
+- master 自动转移
+cluster模式：未知
 
 
 # 主从模式
@@ -37,40 +43,78 @@ PSYNC
 # sentinel/哨兵模式
 
 
+#### 搭建
+
+
+前置条件：redis 进程均已启动，且主从同步模式正常
+
+创建一个配置文件：sentinel.conf
+编辑配置文件：vim sentinel.conf
+
+```
+// 2台哨兵实例判断监视服务器为主观下线，则该监视服务器变为客观下线(可以故障转移)
+sentinel monitor mymaster 127.0.0.1 6379 2  
+
+// master 无效回复时间达到 30000ms，则该服务器主观下线 
+sentinel down-after-milliseconds mymaster 30000 
+
+//选项指定了在执行故障转移时，最多可以有多少个从服务器同时对新的主服务器进行同步
+这个数字越小，完成故障转移所需的时间就越长。
+sentinel parallel-syncs mymaster 1 
+
+sentinel failover-timeout mymaster 180000
+
+sentinel auth-pass manager1 123456
+```
+
+启动：
 redis-server /path/to/redis-sentinel.conf --sentinel
 
-单独一个进程，用来监控：redis 实例，收集数据，分析数据
-1.  发送消息，做健康检查 
-2.  如果，主节点出现故障
-	- 把从节点切换成主节点
-	- 通知客户端，主IP挂了，使用新IP
-	>get-master-addr-by-name
 
+#### 通信流程
 
 sentinel 进程启动后：
-1. 根据配置文件，连接主节点
-2. 获取主节点的相关信息
-3. 定时心跳
-4. 订阅：__sentinel__:hello ，并发送：hello:我的IP：PORT
-5. 其它哨兵也是重复上面的过程，sentinel 之间就正常通信了
-6. 当某个节点的 sentinel 发送主节点故障，它就频道里发送：+switch-master 。这里叫：主观下线
-7. 其它节点也会重复上面过程，过半后，该主节点要真的下线了。这里叫：客观下线
-8. 下线后就开启选举新主节点过程
-9. 过程跟 zab raft 类似吧，投票，第一轮选自己。
-10. 同时接收其它 sentinel 的选票，根据每个节点的 同步进度
-11. 一但过半，就找个新的出来
+
+1. 根据配置文件中的： master IP:PORT，连接主节点
+	- 订阅连接，订阅 master Channel：\_sentinel\_:hello 
+		1. 发送：hello:我的IP：PORT
+		2. 接收新的 slave 注册 ip:port 信息
+	- 命令连接
+		1. 每秒定时心跳：向 master 和 所有 slave 发送 ping 
+		2. 每10s一次，向被监控的主服务器发送 info 命令，获取 master/slave 状态
+1. 向从节点的 也建立两个连接：订阅连接 和  命令连接
+2. sentinel 之间也会建立连接，但只是命令连接，不用订阅。只需要知道对方是否挂了即可
+3. 其它哨兵也是重复上面的过程
+4. 这样：sentinel 与sentinel之间有通信，sentinel 与 主从 实例也有通信了
+
+简单看：
+- 通过 主从 的 redis 实例，订阅 channel 来确定其它 sentinel 的存在与状态
+- 通过 主从 的 redis 实例，info 来确定 主从 相关详细信息
+- 通过 sentinel 实例，确定 sentinel 健康状态
+
+>sentinel 与 sentinel之间 有监控
+>sentinel 与 主从实例 有监控
+
+sentinel 切换主从：
+1. 当节点A sentinel 向 master 发出PING消息，但是一定时间内没有收到 master 返回的 pong
+2. 它会向其它 sentinel 节点发送消息：+switch-master 。这里叫：主观下线
+3. 其它 sentinel 节点 收到 +switch-master，会向 master 发消息验证是否真的下线了
+4. 如果真的 master 出现问题，就回复 A节点： master 确实出问题了
+5. 节点A收到其它节点的回复，达到一定数量：确认 master 已经出问题了。主节点就真下线了(客观下线)
+>数量：取决于配置文件中的设置
+7. 下线后就开启选举新主节点过程
+
+sentinel 投票（假设有3台机器）：
+- 开始都投自己
+- A 会收到 B C 的投票，但肯定有时间顺序
+- 如果B先到，那C的投票直接拒绝。同时向AC  发送 B 为 leader
+>这种可以叫：拉票，即：谁先到，就认为谁可能是新的 leader 然后给对方投票
+
+这里用到了：定时器，一轮投票什么时候结束，除了接收到所有投票外，还要有个定时器，且：定时器是随机数，这样能更快的选举成功。
 
 
 
-
-
-
-
-
-
-
-
-
+当 之前挂了的 master 重新启动后：它将不再是master，而是做为 slave 接收新的master的同步数据；
 
 
 

@@ -1,27 +1,19 @@
 
-
-
-
-
-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
-
 ```php
-
 echo "Hello World";
 $a = 1 + 1;
 echo $a;
-
 ```
 
 
 PHP执行这段代码会经过如下4个步骤\(确切的来说，应该是PHP的语言引擎Zend\)
 
-| keyword | memo |
-|:---|:---|
-| Scanning(Lexing) | 将PHP代码转换为语言片段(Tokens) |
-| Parsing | 将Tokens转换成简单而有意义的表达式 |
-| Compilation | 将表达式编译成Opocdes |
-| Execution |  顺次执行Opcodes，每次一条，从而实现PHP脚本的功能 |  
+| keyword          | memo                          |     |
+| :--------------- | :---------------------------- | --- |
+| Scanning(Lexing) | 将PHP代码转换为语言片段(Tokens)         |     |
+| Parsing          | 将 Tokens 转换成简单而有意义的表达式        |     |
+| Compilation      | 将表达式编译成Opocdes                |     |
+| Execution        | 顺次执行Opcodes，每次一条，从而实现PHP脚本的功能 |     |
 
 >现在有的 Cache 比如 APC,可以使得PHP缓存住Opcodes，这样，每次有请求来临的时候，就不需要重复执行前面3步，从而能大幅的提高 PHP的执行速度。
 
@@ -121,7 +113,7 @@ Array
 
 它会把 Tokens 编译成一个个 op_array, 每个op_arrayd包含如下5个部分：
 
-1. Opcode数字的标识，指明了每个 op_array 的操作类型，比如add , echo
+1. Opcode 数字的标识，指明了每个 op_array 的操作类型，比如add , echo
 2. 结果 存放Opcode结果
 3. 操作数1 给Opcode的操作数
 4. 操作数2

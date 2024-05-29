@@ -1,63 +1,61 @@
 
 
-# KAFKA 基础
+# 基础
 
 
-linkedin 公司开发的，使用scala语言编写。
+linkedin 公司开发的，使用 scala 语言编写。
 > 具说早期 使用 ActiveMQ ，性能太差，所以研究了 kafka ，最终捐给 apache 了
 
-解释：分布式消息队列。
+## 术语/名词
 
-| 术语/名词 | 解释 | 分类 |
-| ---- | ---- | ---- |
-| broker | 一个节点，一台服务器，是被 zookeeper 管理。 | 服务器 |
-| Topic | 一个分类，下面可以有N个 partition | 文件管理 |
-| partition | 具体存储消息的容器，一个Topic有N个 partition。可以存储在不同的broker上 | 容器 |
-| replication | partition的副本，用于容灾 | 容器 |
-| Consumer | 消费者，从 kafka 消息队列中读取消息 | 角色 |
-| Consumer Group | 由多个 consumer 组成。 消费者组内每个消费者负责消费不同分区的数据 | 角色 |
-| Producer | 生产者，生产消息交投递到 kafka 中 | 角色 |
-| Offset | 队列的 offset (消息的offset) , Consumer 消费的 offset(消费到了第几条) | 文件处理 |
-| Leader | 每个分区的的主节点(领导者)，只有一个，负责给从分区同步消息 | 分区管理 |
-| Follower | 每个分区从节点（多个）从 leader 中同步数据，保持数据同步 | 分区管理 |
+#### 表格
 
-# Topic
+| 术语/名词          | 解释                                                    | 分类   |
+| -------------- | ----------------------------------------------------- | ---- |
+| broker         | 一个节点，一台服务器，是被 zookeeper 管理。                           | 服务器  |
+| Topic          | 一个分类，下面可以有N个 partition                                | 文件管理 |
+| partition      | 具体存储消息的容器，一个Topic有N个 partition。可以存储在不同的broker上        | 容器   |
+| replication    | partition的副本，用于容灾                                     | 容器   |
+| Consumer       | 消费者，从 kafka 消息队列中读取消息                                 | 角色   |
+| Consumer Group | 由多个 consumer 组成。 消费者组内每个消费者负责消费不同分区的数据                | 角色   |
+| Producer       | 生产者，生产消息交投递到 kafka 中                                  | 角色   |
+| Offset         | 队列的 offset (消息的offset) , Consumer 消费的 offset(消费到了第几条) | 文件处理 |
+| Leader         | 每个分区的的主节点(领导者)，只有一个，负责给从分区同步消息                        | 分区管理 |
+| Follower       | 每个分区从节点（多个）从 leader 中同步数据，保持数据同步                      | 分区管理 |
 
-若干类型的消息，统一设定一个 topic 。发送消息时，需要指定  topic
->像是一个大的分类
+#### Topic
 
+对消息的分类 。发送消息时，需要指定  topic
 它并不存储真实的消息，主要是做分类和管理分区
 
-# partition
+#### partition
 
-真实存储消息的容器，在 topic 下面，可以有多个。
->也可以看成是真实的队列
-
+真实存储消息的容器，在 topic 下面，可以有多个。也可以看成是真实的队列
 每个 partition 会有一个文件夹，里面的存储若干文件，每个文件的内容：就是具体的消息了
 
-# Producer
+#### Producer
 
 发送一条消息 -> broker -> Topic -> partition -> 某一个文件 -> 追加N条记录(数据)
->发消息可以看成是往 这些文件里：追加数据
->
+>KAFKA是顺序存储，发消息可以看成是往 这些文件里：追加数据
+
 #### 指定分区
 1. 如果指定的 partition，那么直接进入该 partition。
 2. 如果没有指定 partition，但是指定了key，使用key的 hash 函数，最终选择 partition
 3. 如果既没有指定 partition，也没有指定 key，使用轮询一的方式进入 partition。
 
 
-#### ACK
+# ACK-机制
 
 
-|  | 0 | 1 | -1 \| all |
-|:---|:---|:---|:---|
-| 说明 | 发过去即 OK | Partition Leader 写入成功 | ISR 和 leader 都要写入成功 |
-| 应答模式 | 不需要 |  leader 应答 |  leader 应答，所有 folower 应答 |
-| 丢消息 | broker 任何异常都会丢消息 | 主备切换可能丢数据 | 副本只有一个且是leader |
-| 速度  | 快 | 中等 | 慢 |
-| 发送次数 | 只发一次/最多一次 | 至少一次/会重试 | 至少一次/会重试 |  
+|      | 0                | 1                     | -1 \| all               |     |
+| :--- | :--------------- | :-------------------- | :---------------------- | --- |
+| 说明   | 发过去即 OK          | Partition Leader 写入成功 | ISR 和 leader 都要写入成功     |     |
+| 应答模式 | 不需要              | leader 应答             | leader 应答，所有 folower 应答 |     |
+| 丢消息  | broker 任何异常都会丢消息 | 主备切换可能丢数据             | 副本只有一个且是leader          |     |
+| 速度   | 快                | 中等                    | 慢                       |     |
+| 发送次数 | 只发一次/最多一次        | 至少一次/会重试              | 至少一次/会重试                |     |
 
-#### 幂等
+# 幂等
 
 可能出现的不幂等的情况，如下：
 
@@ -78,7 +76,7 @@ linkedin 公司开发的，使用scala语言编写。
 - 先执行成功，最后 commit，异步执行 fail，消息丢失
 
 
-解决只装：KAFKA 里加入了 producerId 和 sequenceId（不过这两个值，使用者是碰不到的）
+解决办法：KAFKA 里加入了 producerId 和 sequenceId（不过这两个值，使用者是碰不到的）
 
 - producerId：初始化的时候，会自动分配一个 ProducerID（客户端不可见）
 - sequenceId：生产者每次发送会生成一个自增 ID（从0开始）

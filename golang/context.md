@@ -8,7 +8,7 @@ golang Context 更像是一种设计模式，一组接口，而不是具体的�
 
 一个主接口，一个辅助接口，4个实现类，6个函数
 
-> 网上也有管 context 叫做：家族
+> 网上也有管 context 叫做：context 家族
 
 ```mermaid
 
@@ -118,9 +118,9 @@ type Context interface {
 Context 结构体/接口，只是简单定义了4个函数：
 
 1. Deadline:返回绑定当前context的任务被取消的截止时间；如果没有设定期限，将返回ok == false。
-2. Done :当绑定当前 context 的任务被取消时，将返回一个关闭的channel；如果当前 context 不会被取消，将返回nil。
+2. Done :当绑定当前 context 的任务被取消时，将返回一个关闭的 channel；如果当前 context 不会被取消，将返回nil。
 3. Err :
-	- 如果 Done 返回的channel没有关闭，将返回nil;
+	- 如果 Done 返回的 channel 没有关闭，将返回nil;
 	- 如果Done返回的channel已经关闭，将返回非空的值表示任务结束的原因。
 	- 如果是context被取消，Err将返回Canceled；
 	- 如果是context超时，Err将返回DeadlineExceeded。
