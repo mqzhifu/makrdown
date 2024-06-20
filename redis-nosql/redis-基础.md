@@ -1,8 +1,27 @@
 # 概览
 
-主要是两个功能 ：
+主要两个功能 ：
 1. 内存缓存
 2. NoSql-DB
+
+官网：
+>redis.io
+
+下载地址：
+>https://redis.io/downloads/#redis-stack-downloads
+
+
+
+|                                 |                      |        |     |     |
+| :------------------------------ | :------------------- | :----- | --- | --- |
+| Redis                           | 最基础的，经常使用的           | 开源/社区版 |     |     |
+| Redis Stack                     | 针对redis的扩展。          | 开源/社区版 |     |     |
+| Redis Cloud                     |                      | 开源/社区版 |     |     |
+| Redis Insight                   | 图形工具，管理基础 redis 的GUI | 开源/社区版 |     |     |
+| Redis Enterprise Software       |                      | 企业版    |     |     |
+| Redis Enterprise for Kubernetes |                      | 企业版    |     |     |
+| Redis OSS & Stack               | Redis                |        |     |     |
+
 
 ## 内存缓存
 
